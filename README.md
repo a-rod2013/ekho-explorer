@@ -1,5 +1,6 @@
-# ekho-explorer
-
-This is where we will keep all our stuff.
-
-Anthony Rodriguez
+This is where we will keep track of the project.
+- Ethan Hook
+- Drew Wishengrad
+- Alejandra Salazar
+- Alex Walker
+- Anthony Rodriguez
