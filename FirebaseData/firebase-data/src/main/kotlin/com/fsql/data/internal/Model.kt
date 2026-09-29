@@ -1,6 +1,6 @@
 package com.fsql.data.internal
 
-// Types accepted as parameters in .fsql files
+/** Types accepted as parameters in .fsql files. */
 internal enum class ParamType{
     STRING,
     INT,
@@ -9,7 +9,7 @@ internal enum class ParamType{
     TIMESTAMP
 }
 
-// represents a single declared parameter
+/** Represents a single declared parameter. */
 internal data class ParamDecl(
     val name: String,
     val type: ParamType,
@@ -17,7 +17,7 @@ internal data class ParamDecl(
     val isList: Boolean = false,
 )
 
-// a parsed, ready to run stored proc. Includes its params and SQL statement
+/** A parsed, ready to run stored proc. Includes its params and SQL statement. */
 internal data class ParsedProcedure(
     val name: String,
     val params: List<ParamDecl>,
