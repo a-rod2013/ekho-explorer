@@ -103,7 +103,7 @@ internal object SqlTranslator {
             val columns = if(items.size == 1 && items[0].expression.toString() == "*") {
                 null
             } else {
-                items.map {item -> fieldName(item.expression as? Column ?: reject("Only plain column names are supported in SELECT."))}
+                items.map {item -> fieldname(item.expression as? Column ?: reject("Only plain column names are supported in SELECT."))}
             }
 
             if(isIdEquals(s.where)) {
@@ -249,7 +249,7 @@ internal object SqlTranslator {
 
             return when (val filter = evaluate(s.where)) {
                 Evaluated.Never -> BoundOp.Empty
-                is Evaluated.Fitler -> BoundOp.BulkDelete(collection, requireFilter("DELETE", filter))
+                is Evaluated.Filter -> BoundOp.BulkDelete(collection, requireFilter("DELETE", filter))
             }
         }
 

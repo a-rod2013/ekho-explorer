@@ -25,6 +25,9 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
 
+    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
+    implementation("com.google.firebase:firebase-firestore")
+
     implementation("com.github.jsqlparser:jsqlparser:5.3") {
         exclude(group = "org.openjdk.jmh")
     }
