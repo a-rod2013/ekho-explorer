@@ -1,0 +1,2 @@
+-- @id: STRING
+SELECT * FROM notes WHERE id = @id

@@ -1,0 +1,3 @@
+-- @title: STRING
+-- @body: STRING (nullable)
+INSERT INTO notes (title, body, createdAt) VALUES (@title, @body, NOW())

@@ -5,10 +5,12 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.FirebaseFirestoreException.Code
 import java.io.IOException
 
+/** Turns anything that can go wrong while talking to Firestore into a [DbError]. Never throws. */
 internal object ErrorMapper {
+
     private val URL = Regex("https?://\\S+")
 
-    fun map(error: Throwable): DbError = when(error) {
+    fun map(error: Throwable): DbError = when (error) {
         is FirebaseFirestoreException -> fromFirestore(error)
         is IOException -> DbError.Network(detail(error), error)
         is IllegalArgumentException ->
@@ -18,7 +20,6 @@ internal object ErrorMapper {
 
     private fun fromFirestore(e: FirebaseFirestoreException): DbError {
         val dev = "Firestore ${e.code.name}: ${e.message}"
-
         return when (e.code) {
             Code.UNAVAILABLE -> DbError.Network(dev, e)
             Code.DEADLINE_EXCEEDED -> DbError.Timeout(dev, e)

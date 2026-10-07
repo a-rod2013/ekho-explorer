@@ -1,69 +1,39 @@
 package com.fsql.data.internal
 
-/** Types accepted as parameters in .fsql files. */
-internal enum class ParamType{
-    STRING,
-    INT,
-    FLOAT,
-    BOOL,
-    TIMESTAMP
-}
+/** The types a `.fsql` file can declare for a `@param`. */
+internal typealias ParamType = com.fsql.plan.ParamType
 
-/** Represents a single declared parameter. */
-internal data class ParamDecl(
-    val name: String,
-    val type: ParamType,
-    val nullable: Boolean,
-    val isList: Boolean = false,
-)
+/**
+ * One declared parameter, read from a `-- @name: TYPE` header line.
+ * [isList] is true for `-- @name: TYPE[]`, meaning the value is a list of [type], used with `IN (@name)`.
+ */
+internal typealias ParamDecl = com.fsql.plan.ParamDecl
 
-/** A parsed, ready to run stored proc. Includes its params and SQL statement. */
-internal data class ParsedProcedure(
-    val name: String,
-    val params: List<ParamDecl>,
-    val statement: net.sf.jsqlparser.statement.Statement,
-)
+internal typealias FilterOp = com.fsql.plan.FilterOp
+internal typealias AggKind = com.fsql.plan.AggKind
+internal typealias OrderBy = com.fsql.plan.OrderBy
 
-internal enum class FilterOp {
-    EQ,
-    NEQ,
-    LT,
-    LTE,
-    GT,
-    GTE,
-    IN,
-    IS_NULL,
-    IS_NOT_NULL
-}
-
-// Where conditionals. Post param sub and post null guard fold
+/** A WHERE condition, after parameters were substituted and any NULL guards folded away. */
 internal sealed interface BoundFilter {
     data class Leaf(val field: String, val op: FilterOp, val value: Any?) : BoundFilter
     data class And(val items: List<BoundFilter>) : BoundFilter
     data class Or(val items: List<BoundFilter>) : BoundFilter
 }
 
-internal enum class AggKind {
-    COUNT,
-    SUM,
-    AVG
-}
-
-// represents a value written to a doc field
+/** A value written to one document field. */
 internal sealed interface BoundValue {
     data class Plain(val value: Any?) : BoundValue
 
-    // Firebase increment
+    /** Firestore increment; the amount already carries its sign (`n = n - 3` is `Increment(-3)`). */
     data class Increment(val amount: Number) : BoundValue
 
-    // Now() call from the db
+    /** `NOW()` in a VALUES or SET: Firestore fills in the server's time when it writes. */
     data object ServerTimestamp : BoundValue
 }
 
-internal data class OrderBy(val field: String, val descending: Boolean)
-
-// Final product operator. Already type checked and ready to fire
+/** One concrete database operation, ready for the executor. No parsing or type checking is left to do. */
 internal sealed interface BoundOp {
+    /** The WHERE clause can never match (an optional filter guard folded to always-false); nothing to run. */
     data object Empty : BoundOp
 
     data class DocGet(val collection: String, val id: String, val columns: List<String>?) : BoundOp
@@ -76,8 +46,10 @@ internal sealed interface BoundOp {
         val columns: List<String>?,
     ) : BoundOp
 
-    data class Aggregate(val collection: String, val filter: BoundFilter?, val kind: AggKind, val field: String?) : BoundOp
+    data class Aggregate(val collection: String, val filter: BoundFilter?, val kind: AggKind, val field: String?) :
+        BoundOp
 
+    /** An aggregate whose WHERE folded to "matches nothing"; the result is a zero/null row, no Firestore call. */
     data class EmptyAggregate(val kind: AggKind) : BoundOp
 
     data class Insert(val collection: String, val id: String?, val values: Map<String, BoundValue>) : BoundOp
@@ -86,7 +58,8 @@ internal sealed interface BoundOp {
 
     data class DeleteDoc(val collection: String, val id: String) : BoundOp
 
-    data class BulkUpdate(val collection: String, val filter: BoundFilter, val sets: Map<String, BoundValue>) : BoundOp
+    data class BulkUpdate(val collection: String, val filter: BoundFilter, val sets: Map<String, BoundValue>) :
+        BoundOp
 
     data class BulkDelete(val collection: String, val filter: BoundFilter) : BoundOp
 }

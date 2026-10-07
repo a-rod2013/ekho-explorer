@@ -25,3 +25,4 @@ dependencyResolutionManagement {
 rootProject.name = "FirebaseData"
 include(":app")
 include(":firebase-data")
+includeBuild("fsql-tooling")

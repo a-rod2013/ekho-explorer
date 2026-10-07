@@ -1,7 +1,18 @@
+import org.gradle.api.tasks.PathSensitivity
+
+buildscript {
+    dependencies {
+        classpath("com.fsql:fsql-gradle-plugin:1.0.0")
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
+
+apply(plugin="com.fsql.compile")
 
 android {
     namespace = "com.itsethanhook.firebasedata"
@@ -27,8 +38,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -36,6 +47,9 @@ android {
 }
 
 dependencies {
+    implementation(project(":firebase-data"))
+    implementation(libs.kotlinx.coroutines.android)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -51,4 +65,12 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    testImplementation(libs.kotlin.test.junit)
+}
+
+// forces unit tests to depend on compiled execution plans
+tasks.withType<Test>().configureEach {
+    inputs.files(tasks.named("compileFsql"))
+        .withPropertyName("fsqlPlans")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }

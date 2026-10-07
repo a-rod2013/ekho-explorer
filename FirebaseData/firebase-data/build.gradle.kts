@@ -3,36 +3,32 @@ plugins {
 }
 
 android {
-    namespace = "com.itsethanhook.com/fsql/data/internal"
-    compileSdk {
-        version = release(37)
-    }
+    namespace = "com.fsql.data"
+    compileSdk { version = release(37) }
 
     defaultConfig {
-        minSdk = 26
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        minSdk { version = release(24) }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
-    implementation(libs.androidx.appcompat)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.material)
-
-    implementation(platform("com.google.firebase:firebase-bom:34.19.0"))
-    implementation("com.google.firebase:firebase-firestore")
-
-    implementation("com.github.jsqlparser:jsqlparser:5.3") {
-        exclude(group = "org.openjdk.jmh")
-    }
+    api(platform(libs.firebase.bom))
+    api(libs.firebase.firestore)
+    api(libs.firebase.auth)
+    api(libs.kotlinx.coroutines.core)
+    implementation("com.fsql:fsql-plan:1.0.0")
+    implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
+    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
 }

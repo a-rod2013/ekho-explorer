@@ -4,10 +4,11 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 
 /**
- *  One document from a query result.
+ * One document from a query result.
  *
- *  Getters return null when the field is missing or null, and throw [IllegalStateException]
- *  (naming the field) when the field holds a different type than you asked for.
+ * Getters return null when the field is missing or null, and throw [IllegalStateException] (naming the
+ * field) when the field holds a different type than you asked for: that is a bug worth failing loudly on.
+ * Field names may be dot paths into nested maps (`"address.city"`); `"id"` reads the document id.
  */
 class Row internal constructor(
     val id: String?,
@@ -19,10 +20,10 @@ class Row internal constructor(
 
     fun has(name: String): Boolean = value(name) != null
 
-    fun string(name: String): String? = typed(name, "a string") { it as? String}
+    fun string(name: String): String? = typed(name, "a string") { it as? String }
 
     fun long(name: String): Long? = typed(name, "a whole number") {
-        when(it) {
+        when (it) {
             is Long -> it
             is Int -> it.toLong()
             else -> null
