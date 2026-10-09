@@ -1,6 +1,6 @@
-# <App Name>
+# Ekho Explorer
 
-<One-sentence description: a community biodiversity observation app.>
+A community biodiversity observation app for Android: record sightings with a photo, location, and timestamp, browse them on a map and feed, and confirm species identifications by voting.
 
 ## Features (MVP)
 1. Account creation and sign-in
@@ -13,18 +13,27 @@
 8. Two external API integrations
 
 ## Requirements
-Everyone must match these. Fill in from the project wizard after creating the project.
+Everyone must match these versions.
 
 | Tool | Version |
 |---|---|
-| Android Studio | TBD (Help > About) |
-| Android Gradle Plugin | TBD |
-| Gradle (wrapper) | TBD |
-| Kotlin | TBD |
-| Compose BOM | TBD |
-| JDK | TBD (set via `jvmToolchain`) |
-| minSdk / targetSdk / compileSdk | TBD |
-| Test emulator | Pixel-class image **with Google Play services**, API TBD |
+| Android Studio | Quail 4 / 2026.1.4 Patch 1 (build AI-261.26222.65.2614.16379836) |
+| Android Gradle Plugin | 9.4.1 |
+| Gradle (wrapper) | 9.6.0 |
+| Kotlin | 2.2.10 |
+| Compose BOM | 2026.02.01 |
+| Java language level (app code) | 11 |
+| JDK that runs Gradle | 25 (pinned in `gradle/gradle-daemon-jvm.properties`) |
+| minSdk / targetSdk / compileSdk | 24 / 37 / 37 |
+| Package / applicationId | com.comp350sec001group2.ekhoexplorer |
+| Test emulator | Pixel-class image with Google Play services, API 24 or newer |
+
+### Keeping everyone on the same platform
+- **Do not accept Android Studio prompts to upgrade AGP, Gradle, or Kotlin.** Upgrades are a deliberate pull request from the build owner.
+- Version numbers live in `gradle/libs.versions.toml` and `gradle/wrapper/gradle-wrapper.properties`. Only the build owner edits them.
+- Use the same Android Studio version listed above, or a newer one in the same release line.
+- Leave Android Studio's Gradle JDK setting at its default. Gradle uses the JDK pinned in `gradle/gradle-daemon-jvm.properties`.
+- Always build through the committed Gradle wrapper (`./gradlew`), not a separately installed Gradle.
 
 ## Quick start
 1. Clone the repo and check out `develop`.
@@ -40,6 +49,7 @@ Map data © OpenStreetMap contributors.
 
 ## License
 No license. All rights reserved.
+
 ## Team
 - Ethan Hook
 - Drew Wishengrad
