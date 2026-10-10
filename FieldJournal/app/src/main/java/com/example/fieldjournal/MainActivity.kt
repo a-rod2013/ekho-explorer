@@ -4,13 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialogDefaults.containerColor
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -83,11 +88,41 @@ fun NoteScreen(modifier: Modifier = Modifier) {
             )
         } else {
             // Otherwise, show the list
-            LazyColumn(modifier = Modifier.padding(top = 16.dp)) {
+            LazyColumn(modifier = Modifier.padding(top = 16.dp),
+                // Adds space between cards.
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 items(notes) { note ->
-                    Text(note, modifier = Modifier.padding(vertical = 8.dp))
+                    NoteCard(text = note)
                 }
             }
         }
+    }
+}
+
+// Note cards showing a note. Photos can be added to this card later on.
+@Composable
+fun NoteCard(text: String, modifier: Modifier = Modifier) {
+    Card(
+        // fillMaxWidth makes every card as wide as the screen.
+        modifier = modifier.fillMaxWidth(),
+        // A small shadow so the card lifts off the background
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        // Notecard fill color.
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer
+        )
+    ) {
+        // Padding keeps the text from touching the edge of the note card.
+        Text(text = text, modifier = Modifier.padding(16.dp))
+    }
+}
+
+// Preview of the note cards. Better testing and debugging.
+@Preview(showBackground = true)
+@Composable
+fun NoteCardPreview() {
+    FieldJournalTheme {
+        NoteCard(text = "Monarch butterfly on milkweed near the creek")
     }
 }
