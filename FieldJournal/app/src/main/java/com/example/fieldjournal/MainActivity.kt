@@ -22,6 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -45,10 +46,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun NoteScreen(modifier: Modifier = Modifier) {
+    // The storage functions need a Context to find the apps private folder
+    val context = LocalContext.current
     // rememberSavable keeps text through rotation. Plain remember loses it.
     var noteText by rememberSaveable { mutableStateOf("") }
     // Observable list. Resets on rotation.
-    val notes = remember { mutableStateListOf<String>() }
+    val notes = remember {
+        mutableStateListOf<String>().apply { addAll(loadNotes(context)) }
+    }
 
     Column(modifier = modifier.padding(16.dp)) {
         OutlinedTextField(
@@ -63,6 +68,7 @@ fun NoteScreen(modifier: Modifier = Modifier) {
                 if (noteText.isNotBlank()) {
                     notes.add(0, noteText.trim())
                     noteText = ""
+                    saveNotes(context, notes)
                 }
             },
             modifier = Modifier.padding(top = 8.dp)) {
