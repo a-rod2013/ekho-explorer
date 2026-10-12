@@ -20,9 +20,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             EkhoExplorerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Explorers",
-                        modifier = Modifier.padding(innerPadding)
+                    MapScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
                     )
                 }
             }
