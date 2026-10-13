@@ -19,7 +19,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            FeedScreen()
+            EkhoExplorerTheme {
+                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    MapScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(innerPadding)
+                    )
+                }
+            }
         }
     }
 }
