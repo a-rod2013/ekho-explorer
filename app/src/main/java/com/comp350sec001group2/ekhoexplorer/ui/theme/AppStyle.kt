@@ -22,7 +22,7 @@ data class AppColors(
     val onAccent: Color = Color(0xFFFFFFFF),
     val upvote: Color = Color(0xFF2E9E4F),
     val downvote: Color = Color(0xFFD9534F),
-    val divider: Color = Color(0xFFE1E5E1),
+    val divider: Color = Color(0xFF3A8C3A),
     val dotActive: Color = Color(0xFFFFFFFF),
     val dotInactive: Color = Color(0x80FFFFFF),
 )
@@ -53,5 +53,5 @@ data class AppDimens(
     val icon: Dp = 22.dp,
     val touchTarget: Dp = 48.dp,
     val dot: Dp = 6.dp,
-    val bottomBar: Dp = 64.dp,
+    val bottomBar: Dp = 80.dp,
 )
