@@ -1,5 +1,7 @@
 package com.comp350sec001group2.ekhoexplorer.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -8,7 +10,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 object AppStyle {
-    val colors = AppColors()
+    val colors: AppColors
+        @Composable
+        get() {
+            val scheme = MaterialTheme.colorScheme
+
+            return AppColors(
+                background = scheme.background,
+                surface = scheme.surface,
+                textPrimary = scheme.onSurface,
+                textSecondary = scheme.onSurfaceVariant,
+                accent = scheme.primary,
+                onAccent = scheme.onPrimary,
+                divider = scheme.outline,
+                upvote = AppExtendedColors.upvote,
+                downvote = AppExtendedColors.downvote,
+                dotActive = AppExtendedColors.dotActive,
+                dotInactive = AppExtendedColors.dotInactive
+            )
+        }
+
     val type = AppTypography()
     val dimens = AppDimens()
 }
