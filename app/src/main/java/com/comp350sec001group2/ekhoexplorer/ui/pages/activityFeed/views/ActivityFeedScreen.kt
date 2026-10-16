@@ -21,6 +21,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.SampleP
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 
 
 @Composable
@@ -66,10 +67,14 @@ fun FeedScreenContent(
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-private fun FeedScreenPreview() = FeedScreenContent(
-    uiState = FeedUIState(posts = SamplePosts.all),
-    onQueryChange = {},
-    onSearch = {},
-    onVote = { _, _ -> },
-    onAccountClick = {},
-)
+private fun FeedScreenPreview() {
+    EkhoExplorerTheme {
+        FeedScreenContent(
+            uiState = FeedUIState(posts = SamplePosts.all),
+            onQueryChange = {},
+            onSearch = {},
+            onVote = { _, _ -> },
+            onAccountClick = {}
+        )
+    }
+}

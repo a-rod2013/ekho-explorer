@@ -13,6 +13,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.Post
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 
 @Composable
 fun PostCard(post: Post, onVote: (Vote) -> Unit, modifier: Modifier = Modifier) {
@@ -41,8 +42,16 @@ fun PostCard(post: Post, onVote: (Vote) -> Unit, modifier: Modifier = Modifier) 
 
 @Preview(showBackground = true)
 @Composable
-private fun PostCardPreviewMulti() = PostCard(SamplePosts.all[1], onVote = {})
+private fun PostCardPreviewMulti() {
+    EkhoExplorerTheme{
+        PostCard(SamplePosts.all[1], onVote = {})
+    }
+}
 
 @Preview(showBackground = true)
 @Composable
-private fun PostCardPreviewNoCaption() = PostCard(SamplePosts.all[2], onVote = {})
+private fun PostCardPreviewNoCaption() {
+    EkhoExplorerTheme {
+        PostCard(SamplePosts.all[2], onVote = {})
+    }
+}
