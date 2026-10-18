@@ -20,4 +20,9 @@ sealed class Screen(
         title = "Profile"
     )
 
+    data object Species : Screen(
+        destination = "Species",
+        title = "Species"
+    )
+
 }

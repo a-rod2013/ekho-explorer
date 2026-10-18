@@ -13,7 +13,7 @@ import com.comp350sec001group2.ekhoexplorer.ProfileScreen
 import com.comp350sec001group2.ekhoexplorer.MapScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
-
+import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 
 @Composable
 fun AppNavigation() {
@@ -56,6 +56,11 @@ fun AppNavigation() {
 
             composable(Screen.Profile.destination) {
                 ProfileScreen()
+            }
+
+            // species search screen
+            composable(Screen.Species.destination){
+                SpeciesSearchScreen()
             }
 
         }

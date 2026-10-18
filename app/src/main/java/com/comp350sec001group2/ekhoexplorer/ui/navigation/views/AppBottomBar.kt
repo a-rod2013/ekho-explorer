@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.layout.layoutId
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import androidx.compose.material.icons.filled.Search
 
 @Composable
 fun AppBottomBar(
@@ -39,6 +40,7 @@ fun AppBottomBar(
     val items = listOf(
         Screen.Feed to Icons.Filled.Forum,
         Screen.Map to Icons.Filled.Explore,
+        Screen.Species to Icons.Filled.Search,
         Screen.Profile to Icons.Filled.Person
     )
 
