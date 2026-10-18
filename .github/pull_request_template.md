@@ -13,3 +13,4 @@
 - [ ] No secrets, keys, or `google-services.json` committed
 - [ ] No unrelated formatting changes
 - [ ] Did not change versions in `libs.versions.toml` (or this PR is specifically for that)
+- [ ] No hardcoded colors, font sizes, or spacing literals (see style guide)
