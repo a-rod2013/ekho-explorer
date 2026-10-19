@@ -31,7 +31,7 @@ Everyone must match these versions.
 ### Keeping everyone on the same platform
 - **Do not accept Android Studio prompts to upgrade AGP, Gradle, or Kotlin.** Upgrades are a deliberate pull request from the build owner.
 - Version numbers live in `gradle/libs.versions.toml` and `gradle/wrapper/gradle-wrapper.properties`. Only the build owner edits them.
-- Use the same Android Studio version listed above, or a newer one in the same release line.
+- Use the same Android Studio version listed above, or a newer one, in the same release line.
 - Leave Android Studio's Gradle JDK setting at its default. Gradle uses the JDK pinned in `gradle/gradle-daemon-jvm.properties`.
 - Always build through the committed Gradle wrapper (`./gradlew`), not a separately installed Gradle.
 
@@ -43,6 +43,8 @@ Everyone must match these versions.
 
 ## Contributing
 See [CONTRIBUTING.md](CONTRIBUTING.md).
+Style guide: [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md)
+
 
 ## Map data
 Map data © OpenStreetMap contributors.
@@ -56,3 +58,6 @@ No license. All rights reserved.
 - Alejandra Salazar
 - Alex Walker
 - Anthony Rodriguez
+
+## AI Assistance
+- Markdown generated with help of claude.ai
