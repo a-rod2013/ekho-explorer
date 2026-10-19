@@ -80,6 +80,7 @@ fun EkhoExplorerTheme(
     MaterialTheme(
         colorScheme = LightColorScheme,
         typography = Typography,
+        shapes = AppShapes,
         content = content
     )
 }
