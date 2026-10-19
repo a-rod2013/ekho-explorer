@@ -31,6 +31,7 @@ import org.maplibre.android.annotations.MarkerOptions
 fun MapScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
+    var isDrawingTrail by remember { mutableStateOf(false) }
 
     val mapView = remember {
         MapLibre.getInstance(context)
@@ -105,6 +106,16 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            DrawTrail(
+                mapView = mapView,
+                map = map,
+                onTrailFinished = { points ->
+                    android.util.Log.d(
+                        "DrawTrail",
+                        "Trail finished with ${points.size} points"
+                    )
+                }
+            )
             Button(onClick = {
                 map?.let { currentMap ->
                     currentMap.animateCamera(
