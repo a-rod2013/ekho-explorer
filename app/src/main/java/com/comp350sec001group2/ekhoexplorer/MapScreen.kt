@@ -26,6 +26,7 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.maplibre.android.annotations.MarkerOptions
+import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
@@ -103,8 +104,8 @@ fun MapScreen(modifier: Modifier = Modifier) {
         Column(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .padding(AppStyle.dimens.lg),
+            verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
         ) {
             DrawTrail(
                 mapView = mapView,

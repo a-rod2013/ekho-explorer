@@ -1,5 +1,7 @@
 package com.comp350sec001group2.ekhoexplorer
 
+import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import androidx.compose.ui.graphics.toArgb
 import android.graphics.Color
 import android.graphics.PointF
 import android.view.MotionEvent
@@ -63,7 +65,7 @@ fun DrawTrail(
                         currentPolyline = currentMap.addPolyline(
                             PolylineOptions()
                                 .addAll(trailPoints)
-                                .color(Color.RED)
+                                .color(AppStyle.colors.accent.toArgb())
                                 .width(5f)
                         )
 
