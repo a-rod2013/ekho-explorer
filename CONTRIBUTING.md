@@ -35,8 +35,16 @@ These cause most merge conflicts. Keep edits minimal and tell the team before bi
 - `AndroidManifest.xml`
 - `res/values/strings.xml`: prefix keys by feature (`feed_title`, `auth_error_invalid`)
 - The central navigation file
+- 'ui/theme/*'
 
 ## Do not
 - Accept Android Studio prompts to upgrade AGP/Gradle/Kotlin on your own.
 - Commit `local.properties`, `google-services.json`, keystores, or API keys.
 - Reformat whole files you did not otherwise change.
+
+## Styling
+- Read colors, text styles, spacing, and shapes from the theme (see [docs/STYLE_GUIDE.md](docs/STYLE_GUIDE.md)).
+- Don't hardcode hex values, font sizes, font names, or `dp`/`sp` numbers in screens.
+- Wrap every `@Preview` in `EkhoExplorerTheme`.
+- Changes to files in `ui/theme/` go in a small PR, are announced in chat, and update the style guide.
+

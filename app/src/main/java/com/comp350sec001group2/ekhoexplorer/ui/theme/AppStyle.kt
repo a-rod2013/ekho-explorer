@@ -1,57 +1,97 @@
 package com.comp350sec001group2.ekhoexplorer.ui.theme
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 object AppStyle {
-    val colors = AppColors()
-    val type = AppTypography()
+    val colors: AppColors
+        @Composable
+        get() {
+            val scheme = MaterialTheme.colorScheme
+
+            return AppColors(
+                background = scheme.background,
+                surface = scheme.surface,
+                textPrimary = scheme.onSurface,
+                textSecondary = scheme.onSurfaceVariant,
+                accent = scheme.primary,
+                onAccent = scheme.onPrimary,
+                divider = scheme.outline,
+                upvote = AppExtendedColors.upvote,
+                downvote = AppExtendedColors.downvote,
+                dotActive = AppExtendedColors.dotActive,
+                dotInactive = AppExtendedColors.dotInactive
+            )
+        }
+
+    val type: AppTypography
+        @Composable
+        get() {
+            val typography = MaterialTheme.typography
+
+            return AppTypography(
+                username = typography.titleSmall,
+                caption = typography.bodyMedium,
+                captionAction = typography.labelLarge,
+                count = typography.labelLarge,
+                searchText = SearchTextStyle,
+                searchHint = SearchTextStyle,
+                navLabel = typography.labelMedium,
+                logo = LogoTextStyle,
+            )
+        }
+
     val dimens = AppDimens()
 }
 
 data class AppColors(
-    val background: Color = Color(0xFFFFFFFF),
-    val surface: Color = Color(0xFFF1F3F1),
-    val textPrimary: Color = Color(0xFF121512),
-    val textSecondary: Color = Color(0xFF5E665E),
-    val accent: Color = Color(0xFF2E9E4F),
-    val onAccent: Color = Color(0xFFFFFFFF),
-    val upvote: Color = Color(0xFF2E9E4F),
-    val downvote: Color = Color(0xFFD9534F),
-    val divider: Color = Color(0xFFE1E5E1),
-    val dotActive: Color = Color(0xFFFFFFFF),
-    val dotInactive: Color = Color(0x80FFFFFF),
+    val background: Color,
+    val surface: Color,
+    val textPrimary: Color,
+    val textSecondary: Color,
+    val accent: Color,
+    val onAccent: Color,
+    val upvote: Color,
+    val downvote: Color,
+    val divider: Color,
+    val dotActive: Color,
+    val dotInactive: Color,
 )
 
+// Compatibility Layer - Each property forwards to shared style
 data class AppTypography(
-    val username: TextStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold),
-    val caption: TextStyle = TextStyle(fontSize = 14.sp, lineHeight = 20.sp),
-    val captionAction: TextStyle = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium),
-    val count: TextStyle = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Medium),
-    val searchText: TextStyle = TextStyle(fontSize = 15.sp),
-    val searchHint: TextStyle = TextStyle(fontSize = 15.sp),
-    val navLabel: TextStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Medium),
-    val logo: TextStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold),
+    val username: TextStyle,
+    val caption: TextStyle,
+    val captionAction: TextStyle,
+    val count: TextStyle,
+    val searchText: TextStyle,
+    val searchHint: TextStyle,
+    val navLabel: TextStyle,
+    val logo: TextStyle,
 )
-
+// Spacing and Radii forward to Spacing.kt and Shape.kt
+// Left established constants - these belong to specific components, remain in AppStyle.kt
 data class AppDimens(
-    val xs: Dp = 4.dp,
-    val sm: Dp = 8.dp,
-    val md: Dp = 12.dp,
-    val lg: Dp = 16.dp,
-    val xl: Dp = 24.dp,
-    val radiusSm: Dp = 8.dp,
-    val radiusMd: Dp = 12.dp,
-    val pill: Dp = 100.dp,
+    // Spacing
+    val xs: Dp = Spacing.xs,
+    val sm: Dp = Spacing.sm,
+    val md: Dp = Spacing.md,
+    val lg: Dp = Spacing.lg,
+    val xl: Dp = Spacing.xl,
+    // Shape
+    val radiusSm: Dp = RadiusSmall,
+    val radiusMd: Dp = RadiusMedium,
+    val pill: Dp = RadiusPill,
+    // Specific Components
     val avatar: Dp = 40.dp,
     val logo: Dp = 40.dp,
     val searchHeight: Dp = 44.dp,
     val icon: Dp = 22.dp,
     val touchTarget: Dp = 48.dp,
     val dot: Dp = 6.dp,
-    val bottomBar: Dp = 64.dp,
+    val bottomBar: Dp = 80.dp,
 )

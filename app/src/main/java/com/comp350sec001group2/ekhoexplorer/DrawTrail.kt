@@ -37,7 +37,7 @@ fun DrawTrail(
     var currentPolyline by remember {
         mutableStateOf<Polyline?>(null)
     }
-
+    val trailColor = AppStyle.colors.accent.toArgb()
     DisposableEffect(mapView, map, isDrawingTrail) {
         val currentMap = map
 
@@ -65,7 +65,7 @@ fun DrawTrail(
                         currentPolyline = currentMap.addPolyline(
                             PolylineOptions()
                                 .addAll(trailPoints)
-                                .color(AppStyle.colors.accent.toArgb())
+                                .color(trailColor)
                                 .width(5f)
                         )
 

@@ -1,4 +1,3 @@
-
 package com.comp350sec001group2.ekhoexplorer
 
 import androidx.compose.foundation.layout.Arrangement
@@ -10,36 +9,39 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import org.maplibre.android.MapLibre
-import org.maplibre.android.camera.CameraPosition
-import org.maplibre.android.geometry.LatLng
-import org.maplibre.android.maps.MapView
-import org.maplibre.android.maps.MapLibreMap
-import org.maplibre.android.maps.Style
-import org.maplibre.android.annotations.MarkerOptions
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import org.maplibre.android.MapLibre
+import org.maplibre.android.annotations.MarkerOptions
+import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
+import org.maplibre.android.maps.MapView
+import org.maplibre.android.maps.Style
 
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var map by remember { mutableStateOf<MapLibreMap?>(null) }
-    var isDrawingTrail by remember { mutableStateOf(false) }
 
     val mapView = remember {
         MapLibre.getInstance(context)
+
         MapView(context).apply {
             onCreate(null)
+
             getMapAsync { loadedMap ->
                 map = loadedMap
+
                 loadedMap.cameraPosition = CameraPosition.Builder()
                     .target(LatLng(34.1628, -119.0436))
                     .zoom(14.0)
@@ -49,14 +51,15 @@ fun MapScreen(modifier: Modifier = Modifier) {
 
                 loadedMap.setStyle(
                     Style.Builder()
-                        .fromUri("https://tiles.openfreemap.org/styles/liberty")
+                        .fromUri(
+                            "https://tiles.openfreemap.org/styles/liberty"
+                        )
                 ) { style ->
                     android.util.Log.d(
                         "EkhoMap",
                         "Map style loaded. Number of layers: ${style.layers.size}"
                     )
 
-                    // Sample nature observation 1
                     loadedMap.addMarker(
                         MarkerOptions()
                             .position(LatLng(34.1628, -119.0436))
@@ -64,7 +67,6 @@ fun MapScreen(modifier: Modifier = Modifier) {
                             .snippet("Sample observation: Native flower")
                     )
 
-                    // Sample nature observation 2
                     loadedMap.addMarker(
                         MarkerOptions()
                             .position(LatLng(34.1650, -119.0410))
@@ -72,7 +74,6 @@ fun MapScreen(modifier: Modifier = Modifier) {
                             .snippet("Sample observation: Bird sighting")
                     )
 
-                    // Sample nature observation 3
                     loadedMap.addMarker(
                         MarkerOptions()
                             .position(LatLng(34.1605, -119.0460))
@@ -117,24 +118,25 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     )
                 }
             )
-            Button(onClick = {
-                map?.let { currentMap ->
-                    currentMap.animateCamera(
-                        org.maplibre.android.camera.CameraUpdateFactory.zoomIn()
+
+            Button(
+                onClick = {
+                    map?.animateCamera(
+                        CameraUpdateFactory.zoomIn()
                     )
                 }
-            }) {
+            ) {
                 Text("+")
             }
 
-            Button(onClick = {
-                map?.let { currentMap ->
-                    currentMap.animateCamera(
-                        org.maplibre.android.camera.CameraUpdateFactory.zoomOut()
+            Button(
+                onClick = {
+                    map?.animateCamera(
+                        CameraUpdateFactory.zoomOut()
                     )
                 }
-            }) {
-                Text("−")
+            ) {
+                Text("-")
             }
         }
     }
