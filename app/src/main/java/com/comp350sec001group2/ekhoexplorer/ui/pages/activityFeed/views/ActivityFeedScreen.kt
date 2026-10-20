@@ -12,8 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.AccountBottomBar
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.FeedHeader
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.Vote
@@ -54,8 +52,9 @@ fun FeedScreenContent(
         containerColor = AppStyle.colors.background,
         // The header and bottom bar apply their own system-bar insets.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
-        bottomBar = { AccountBottomBar(onAccountClick = onAccountClick) },
+
+        // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
+        // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
             items(items = uiState.posts, key = { it.id }) { post ->
