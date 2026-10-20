@@ -5,6 +5,8 @@ sealed class Screen(
     val title: String
 ) {
 
+    // Add a new object here when wanting to create a new navbar addition
+    // be sure to include both a destination and title value
     data object Map : Screen(
         destination = "map",
         title = "Map"

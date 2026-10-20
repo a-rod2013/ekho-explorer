@@ -39,6 +39,14 @@ fun AppNavigation() {
             )
         }
     )  { innerPadding ->
+
+        /**
+         * Call screen composable function here when adding a navbar addition
+         *
+         * i.e. MapScreen() --> [MapScreen]
+         *
+         * (hold ctrl or command and click on MapScreen to see the reference)
+         */
         NavHost(
             navController = navController,
             startDestination = Screen.Map.destination,

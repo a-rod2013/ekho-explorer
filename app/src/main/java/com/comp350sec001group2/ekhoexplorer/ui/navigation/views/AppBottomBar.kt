@@ -37,6 +37,7 @@ fun AppBottomBar(
     val dimens = AppStyle.dimens
     val typography = AppStyle.type
 
+    // Add Screen.title from ui/navigation/models/Screen to add a navbar addition
     val items = listOf(
         Screen.Feed to Icons.Filled.Forum,
         Screen.Map to Icons.Filled.Explore,
