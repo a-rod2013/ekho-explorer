@@ -52,11 +52,11 @@ fun AppNavigation() {
                 FeedScreen()
             }
 
-            // For future implementation of the profile screen...
+            // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
 
-            composable(Screen.Profile.destination) {
-                ProfileScreen()
-            }
+//            composable(Screen.Profile.destination) {
+//                ProfileScreen()
+//            }
 
             // species search screen
             composable(Screen.Species.destination){

@@ -41,7 +41,9 @@ fun AppBottomBar(
         Screen.Feed to Icons.Filled.Forum,
         Screen.Map to Icons.Filled.Explore,
         Screen.Species to Icons.Filled.Search,
-        Screen.Profile to Icons.Filled.Person
+
+        // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
+        // Screen.Profile to Icons.Filled.Person
     )
 
     Box {
