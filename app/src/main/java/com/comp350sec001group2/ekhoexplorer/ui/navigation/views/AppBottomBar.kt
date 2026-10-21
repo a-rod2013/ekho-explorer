@@ -37,11 +37,14 @@ fun AppBottomBar(
     val dimens = AppStyle.dimens
     val typography = AppStyle.type
 
+    // Add Screen.title from ui/navigation/models/Screen to add a navbar addition
     val items = listOf(
         Screen.Feed to Icons.Filled.Forum,
         Screen.Map to Icons.Filled.Explore,
         Screen.Species to Icons.Filled.Search,
-        Screen.Profile to Icons.Filled.Person
+
+        // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
+        // Screen.Profile to Icons.Filled.Person
     )
 
     Box {
