@@ -21,8 +21,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 
 @Composable

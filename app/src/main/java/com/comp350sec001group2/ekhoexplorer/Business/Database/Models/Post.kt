@@ -1,4 +1,4 @@
-package com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models
+package com.comp350sec001group2.ekhoexplorer.Business.Database.Models
 
 enum class Vote{NONE, UP, DOWN}
 

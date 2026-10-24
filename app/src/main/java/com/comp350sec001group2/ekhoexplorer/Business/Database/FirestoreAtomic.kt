@@ -1,7 +1,5 @@
 package com.comp350sec001group2.ekhoexplorer.Business.Database
 
-import com.firestoreaccess.mapping.DocumentReader
-import com.firestoreaccess.mapping.readSafely
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Transaction

@@ -35,6 +35,11 @@ class FirestoreService(
         }
     }
 
+    suspend fun <T> execute(operation: FirestoreTransaction<T>): T = instrumented(operation) {
+        val options = TransactionOptions.Builder().setMaxAttempts(operation.maxAttempts).build()
+        firestore.runTransaction(options, Transaction.Function { tx -> operation.run(TransactionScope(context, tx)) }).await()
+    }
+
     suspend fun <T> executeCatching(operation: FirestoreAccessor<T>): FirestoreResult<T> =
         firestoreResult { execute(operation) }
 
