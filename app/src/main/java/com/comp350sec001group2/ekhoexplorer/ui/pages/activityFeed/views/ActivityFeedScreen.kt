@@ -12,19 +12,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.FeedHeader
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.PostCard
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.Vote
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedViewModel
+import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.feedViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 
 
 @Composable
 fun FeedScreen(
-    viewModel: FeedViewModel = viewModel(),
+    viewModel: FeedViewModel = viewModel(factory = feedViewModelFactory),
     onAccountClick: () -> Unit = {},
     onSearch: (String) -> Unit = {},
 ) {

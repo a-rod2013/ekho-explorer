@@ -1,4 +1,4 @@
-package com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models
+package com.comp350sec001group2.ekhoexplorer.Business.Database.Models
 
 object SamplePosts {
     private fun img(seed: String) = "https://picsum.photos/seed/$seed/800/800"
