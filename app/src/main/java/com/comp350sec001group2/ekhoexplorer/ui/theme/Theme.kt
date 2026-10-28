@@ -121,7 +121,7 @@ val AppExtendedColors = ExtendedColors(
 
 @Composable
 fun EkhoExplorerTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
