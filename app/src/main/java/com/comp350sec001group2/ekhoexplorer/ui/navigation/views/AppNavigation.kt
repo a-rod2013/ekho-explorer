@@ -14,6 +14,7 @@ import com.comp350sec001group2.ekhoexplorer.MapScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
+import androidx.compose.material3.Text
 
 @Composable
 fun AppNavigation() {
@@ -69,6 +70,10 @@ fun AppNavigation() {
             // species search screen
             composable(Screen.Species.destination){
                 SpeciesSearchScreen()
+            }
+
+            composable(Screen.Camera.destination){
+                Text("Camera screen")
             }
 
         }

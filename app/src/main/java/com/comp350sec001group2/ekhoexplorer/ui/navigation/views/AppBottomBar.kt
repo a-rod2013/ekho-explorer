@@ -26,6 +26,7 @@ import androidx.compose.ui.layout.layoutId
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.PhotoCamera
 
 @Composable
 fun AppBottomBar(
@@ -42,6 +43,7 @@ fun AppBottomBar(
         Screen.Feed to Icons.Filled.Forum,
         Screen.Map to Icons.Filled.Explore,
         Screen.Species to Icons.Filled.Search,
+        Screen.Camera to Icons.Filled.PhotoCamera
 
         // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
         // Screen.Profile to Icons.Filled.Person

@@ -27,4 +27,9 @@ sealed class Screen(
         title = "Species"
     )
 
+    data object Camera: Screen(
+        destination = "camera",
+        title = "Camera"
+    )
+
 }
