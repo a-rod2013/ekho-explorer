@@ -1,7 +1,9 @@
 package com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
@@ -16,20 +18,42 @@ import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 
 @Composable
-fun PostCard(post: Post, onVote: (Vote) -> Unit, modifier: Modifier = Modifier) {
+fun PostCard(
+    post: Post,
+    onVote: (Vote) -> Unit,
+    modifier: Modifier = Modifier,
+    isOwner: Boolean = false,
+    onOpenComments: () -> Unit = {},
+    onDelete: () -> Unit = {},
+    onHideUser: () -> Unit = {},
+    onBlockUser: () -> Unit = {},
+) {
     val d = AppStyle.dimens
     Column(modifier = modifier.fillMaxWidth().background(AppStyle.colors.background)) {
-        PostHeaderRow(avatarUrl = post.avatarUrl, username = post.username)
+        PostHeaderRow(avatarUrl = post.avatarUrl, username = post.username) {
+            PostMenu(
+                username = post.username,
+                isOwner = isOwner,
+                onDelete = onDelete,
+                onHideUser = onHideUser,
+                onBlockUser = onBlockUser,
+            )
+        }
         if (post.imageUrls.isNotEmpty()) {
             ImageCarousel(imageUrls = post.imageUrls)
         }
-        VoteBar(
-            upCount = post.upCount,
-            downCount = post.downCount,
-            myVote = post.myVote,
-            onVote = onVote,
+        Row(
             modifier = Modifier.padding(horizontal = d.sm, vertical = d.xs),
-        )
+            horizontalArrangement = Arrangement.spacedBy(d.sm),
+        ) {
+            VoteBar(
+                upCount = post.upCount,
+                downCount = post.downCount,
+                myVote = post.myVote,
+                onVote = onVote,
+            )
+            CommentButton(count = post.commentCount, onClick = onOpenComments)
+        }
         if (post.caption.isNotBlank()) {
             ExpandableCaption(
                 text = post.caption,

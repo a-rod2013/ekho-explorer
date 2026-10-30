@@ -9,4 +9,7 @@ data class FeedUIState(
     val posts: List<Post> = emptyList(),
     val error: FirestoreErrorKind? = null,
     val query: String="",
+    val isRefreshing: Boolean = false,
+    val currentUserId: String = "",
 )
+

@@ -18,7 +18,12 @@ import coil.compose.AsyncImage
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 
 @Composable
-fun PostHeaderRow(avatarUrl: String?, username: String, modifier: Modifier = Modifier) {
+fun PostHeaderRow(
+    avatarUrl: String?,
+    username: String,
+    modifier: Modifier = Modifier,
+    trailing: @Composable () -> Unit = {},
+) {
     val d = AppStyle.dimens
     Row(
         modifier = modifier
@@ -36,6 +41,12 @@ fun PostHeaderRow(avatarUrl: String?, username: String, modifier: Modifier = Mod
                 .clip(CircleShape)
                 .background(AppStyle.colors.surface),
         )
-        Text(text = username, style = AppStyle.type.username, color = AppStyle.colors.textPrimary)
+        Text(
+            text = username,
+            style = AppStyle.type.username,
+            color = AppStyle.colors.textPrimary,
+            modifier = Modifier.weight(1f),
+        )
+        trailing()
     }
 }
