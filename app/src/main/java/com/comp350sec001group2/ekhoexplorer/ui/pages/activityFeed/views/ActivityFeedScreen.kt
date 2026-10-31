@@ -24,6 +24,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
+import com.comp350sec001group2.ekhoexplorer.ui.components.EmptyState
 import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
@@ -114,6 +115,21 @@ fun FeedScreenContent(
             modifier = Modifier.padding(padding).fillMaxSize(),
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
+                // Nothing to show
+                if (uiState.posts.isEmpty() && !uiState.isLoading && !uiState.isRefreshing) {
+                    item {
+                        val (title, message) = when {
+                            uiState.error != null ->
+                                "Couldn't load posts" to "Check your connection, then pull down to try again."
+                            uiState.hasHiddenUsers ->
+                                "No posts available" to
+                                    "Posts from accounts you hid or blocked are not shown. Pull down to refresh."
+                            else ->
+                                "No posts available" to "Check back soon. Pull down to refresh."
+                        }
+                        EmptyState(title = title, message = message, modifier = Modifier.fillParentMaxSize())
+                    }
+                }
                 items(items = uiState.posts, key = { it.id }) { post ->
                     PostCard(
                         post = post,
@@ -136,6 +152,20 @@ private fun FeedScreenPreview() {
     EkhoExplorerTheme {
         FeedScreenContent(
             uiState = FeedUIState(posts = SamplePosts.all),
+            onQueryChange = {},
+            onSearch = {},
+            onVote = { _, _ -> },
+            onAccountClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun FeedScreenEmptyPreview() {
+    EkhoExplorerTheme {
+        FeedScreenContent(
+            uiState = FeedUIState(isLoading = false, hasHiddenUsers = true),
             onQueryChange = {},
             onSearch = {},
             onVote = { _, _ -> },

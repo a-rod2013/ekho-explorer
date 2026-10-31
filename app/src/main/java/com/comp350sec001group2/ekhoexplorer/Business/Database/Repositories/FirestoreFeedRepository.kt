@@ -34,8 +34,13 @@ class FirestoreFeedRepository(
 
     private val pager = Pager { cursor -> service.execute(GetFeedPageQuery(PAGE_SIZE, cursor)) }
 
-    // Get posts: load the next page, then mark which ones I have voted on.
     override suspend fun loadMore() {
+        loadNextPage()
+        keepLoadingWhileFeedLooksEmpty()
+    }
+
+    // Get posts: load the next page, then mark which ones I have voted on.
+    private suspend fun loadNextPage() {
         val page = pager.loadNext()
         if (page.isEmpty()) return
         val fresh = withMyVotes(page)
@@ -49,6 +54,22 @@ class FirestoreFeedRepository(
     override suspend fun refresh() {
         pager.reset()
         state.value = withMyVotes(pager.loadNext())
+        keepLoadingWhileFeedLooksEmpty()
+    }
+
+    // If every loaded post is from a hidden or blocked account, look further before the screen
+    // says there are no posts. Gives up after a few pages.
+    private suspend fun keepLoadingWhileFeedLooksEmpty() {
+        var extraPages = 0
+        while (pager.hasMore && extraPages < MAX_EXTRA_PAGES && isVisibleFeedEmpty()) {
+            loadNextPage()
+            extraPages++
+        }
+    }
+
+    private fun isVisibleFeedEmpty(): Boolean {
+        val user = EhkoCache.activeUser
+        return state.value.none { !user.hidesPostsFrom(it.userId) }
     }
 
     // Like or dislike: update the screen immediately, then confirm with the database.
@@ -101,5 +122,8 @@ class FirestoreFeedRepository(
     private fun replace(post: Post) =
         state.update { list -> list.map { if (it.id == post.id) post else it } }
 
-    private companion object { const val PAGE_SIZE = 10 }
+    private companion object {
+        const val PAGE_SIZE = 10
+        const val MAX_EXTRA_PAGES = 5
+    }
 }
