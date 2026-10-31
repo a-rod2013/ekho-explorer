@@ -10,6 +10,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreErrorKind
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreException
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FeedRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,7 +23,12 @@ import kotlinx.coroutines.launch
 class FeedViewModel(
     private val repository: FeedRepository,
     private val relations: UserRelationsRepository,
+    notifications: NotificationRepository,
 ) : ViewModel() {
+
+    /** Unread notifications, for the bell badge. */
+    val unreadNotifications: StateFlow<Int> =
+        notifications.unreadCount.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     private val query = MutableStateFlow("")
     private val error = MutableStateFlow<FirestoreErrorKind?>(null)
@@ -68,6 +74,10 @@ class FeedViewModel(
 val feedViewModelFactory = viewModelFactory {
     initializer {
         val app = this[APPLICATION_KEY] as EkhoApp
-        FeedViewModel(app.container.feedRepository, app.container.userRelationsRepository)
+        FeedViewModel(
+            app.container.feedRepository,
+            app.container.userRelationsRepository,
+            app.container.notificationRepository,
+        )
     }
 }

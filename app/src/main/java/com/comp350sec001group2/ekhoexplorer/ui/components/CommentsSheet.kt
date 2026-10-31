@@ -1,4 +1,4 @@
-package com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components
+package com.comp350sec001group2.ekhoexplorer.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +38,7 @@ import coil.compose.AsyncImage
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Comment
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.CommentFields
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
+import com.comp350sec001group2.ekhoexplorer.ui.components.VoteBar
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.CommentsUIState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.CommentsViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.commentsViewModelFactory

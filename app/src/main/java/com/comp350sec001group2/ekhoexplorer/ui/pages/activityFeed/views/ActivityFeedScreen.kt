@@ -23,8 +23,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.CommentsSheet
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.PostCard
+import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
+import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
+import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.feedViewModelFactory
@@ -37,8 +38,10 @@ fun FeedScreen(
     viewModel: FeedViewModel = viewModel(factory = feedViewModelFactory),
     onAccountClick: () -> Unit = {},
     onSearch: (String) -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val unreadNotifications by viewModel.unreadNotifications.collectAsStateWithLifecycle()
     var commentsPostId by rememberSaveable { mutableStateOf<String?>(null) }
 
     FeedScreenContent(
@@ -52,6 +55,8 @@ fun FeedScreen(
         onDeletePost = viewModel::onDeletePost,
         onHideUser = viewModel::onHideUser,
         onBlockUser = viewModel::onBlockUser,
+        unreadNotifications = unreadNotifications,
+        onOpenNotifications = onOpenNotifications,
     )
 
     commentsPostId?.let { postId ->
@@ -59,7 +64,7 @@ fun FeedScreen(
     }
 }
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreenContent(
     uiState: FeedUIState,
@@ -73,6 +78,8 @@ fun FeedScreenContent(
     onDeletePost: (postId: String) -> Unit = {},
     onHideUser: (userId: String) -> Unit = {},
     onBlockUser: (userId: String) -> Unit = {},
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState.error) {
@@ -88,6 +95,18 @@ fun FeedScreenContent(
 
         // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
         // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
+
+        // Same header with the search field left out (see above) and the notification bell added.
+        topBar = {
+            FeedHeader(
+                query = uiState.query,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch,
+                showSearch = false,
+                onBellClick = onOpenNotifications,
+                unreadNotifications = unreadNotifications,
+            )
+        },
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,

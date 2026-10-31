@@ -7,7 +7,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.AppContainer
 private const val SEED_SAMPLE_POSTS = false
 
 class EkhoApp : Application() {
-    val container by lazy { AppContainer() }
+    val container by lazy { AppContainer(this) }
 
     override fun onCreate() {
         super.onCreate()

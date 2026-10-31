@@ -6,12 +6,14 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.AddFeedPo
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.DeleteFeedPostCommand
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreException
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreService
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.NotificationType
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Pager
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetFeedPageQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetFeedVotesQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.VoteOnFeedPostTransaction
+import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.update
 /** The signed-in user comes from [EhkoCache.activeUser]. */
 class FirestoreFeedRepository(
     private val service: FirestoreService,
+    private val notifications: NotificationService,
 ) : FeedRepository {
 
     private val state = MutableStateFlow<List<Post>>(emptyList())
@@ -31,7 +34,7 @@ class FirestoreFeedRepository(
 
     private val pager = Pager { cursor -> service.execute(GetFeedPageQuery(PAGE_SIZE, cursor)) }
 
-    // Get posts: load the next page, then mark which ones the user has voted on.
+    // Get posts: load the next page, then mark which ones I have voted on.
     override suspend fun loadMore() {
         val page = pager.loadNext()
         if (page.isEmpty()) return
@@ -52,11 +55,23 @@ class FirestoreFeedRepository(
     override suspend fun vote(postId: String, tapped: Vote) {
         val original = state.value.firstOrNull { it.id == postId } ?: return
         replace(original.withVote(tapped))
-        try {
+        val result = try {
             service.execute(VoteOnFeedPostTransaction(postId, EhkoCache.activeUser.userId, tapped))
         } catch (e: FirestoreException) {
             replace(original)          // undo just this post
             throw e
+        }
+
+        // Tell the author about a new like, or take the notice back if the like was removed.
+        if (result == Vote.UP) {
+            notifications.send(
+                NotificationType.POST_LIKE,
+                postId = postId,
+                preview = original.caption,
+                recipientId = original.userId,
+            )
+        } else if (original.myVote == Vote.UP) {
+            notifications.retract(NotificationType.POST_LIKE, postId = postId, recipientId = original.userId)
         }
     }
 
