@@ -11,6 +11,11 @@ data class Post(
     val upCount: Int,
     val downCount: Int,
     val myVote: Vote = Vote.NONE,
+
+    /** The author. Empty for sample posts. Remove once we have data :) */
+    val userId: String = "",
+
+    val commentCount: Int = 0,
 ) {
     /** Returns the post after the user taps [tapped], Tapping the active vote clears it. */
     fun withVote(tapped: Vote): Post {

@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreErrorKind
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreException
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FeedRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,14 +19,19 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
+class FeedViewModel(
+    private val repository: FeedRepository,
+    private val relations: UserRelationsRepository,
+) : ViewModel() {
 
     private val query = MutableStateFlow("")
     private val error = MutableStateFlow<FirestoreErrorKind?>(null)
+    private val refreshing = MutableStateFlow(false)
 
-    val uiState: StateFlow<FeedUIState> = combine(repository.posts, query, error) { posts, q, e ->
-        FeedUIState(posts = posts, query = q, error = e)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedUIState())
+    val uiState: StateFlow<FeedUIState> =
+        combine(repository.posts, query, error, refreshing, EhkoCache.activeUserFlow) { posts, q, e, r, user ->
+            FeedUIState(posts = posts, query = q, error = e, isRefreshing = r, currentUserId = user.userId)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), FeedUIState())
 
     init { loadMore() }
 
@@ -32,6 +39,19 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
     fun loadMore() = launchGuarded { repository.loadMore() }
     fun onVote(postId: String, tapped: Vote) = launchGuarded { repository.vote(postId, tapped) }
     fun onAddPost(caption: String, imageUrls: List<String>) = launchGuarded { repository.addPost(caption, imageUrls) }
+    fun onDeletePost(postId: String) = launchGuarded { repository.deletePost(postId) }
+    fun onHideUser(userId: String) = launchGuarded { relations.hidePostsFrom(userId) }
+    fun onBlockUser(userId: String) = launchGuarded { relations.block(userId) }
+
+    /** Pull to refresh. [uiState].isRefreshing drives the spinner. */
+    fun onRefresh() = launchGuarded {
+        refreshing.value = true
+        try {
+            repository.refresh()
+        } finally {
+            refreshing.value = false
+        }
+    }
 
     private fun launchGuarded(block: suspend () -> Unit) {
         viewModelScope.launch {
@@ -48,6 +68,6 @@ class FeedViewModel(private val repository: FeedRepository) : ViewModel() {
 val feedViewModelFactory = viewModelFactory {
     initializer {
         val app = this[APPLICATION_KEY] as EkhoApp
-        FeedViewModel(app.container.feedRepository)
+        FeedViewModel(app.container.feedRepository, app.container.userRelationsRepository)
     }
 }
