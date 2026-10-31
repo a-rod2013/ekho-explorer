@@ -15,6 +15,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import androidx.compose.material3.Text
+import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
 
 @Composable
 fun AppNavigation() {
@@ -73,7 +74,16 @@ fun AppNavigation() {
             }
 
             composable(Screen.Camera.destination){
-                Text("Camera screen")
+                CameraScreen(
+                    onPosted = {
+                        navController.navigate(Screen.Feed.destination){
+                            popUpTo(Screen.Camera.destination){
+                                inclusive = true
+                            }
+                            launchSingleTop = true
+                        }
+                    }
+                )
             }
 
         }
