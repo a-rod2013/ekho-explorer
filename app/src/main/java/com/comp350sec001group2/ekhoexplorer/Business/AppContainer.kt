@@ -12,15 +12,28 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.Fires
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreFeedRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreUserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalDatabase
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalPhotoStorage
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.LocalJournalRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import android.content.Context
 
-class AppContainer {
+
+class AppContainer(context: Context) {
     private val service = FirestoreService(Firebase.firestore)
+
+    private val journalDatabase = JournalDatabase.create(context)
+
+    val journalPhotoStorage = JournalPhotoStorage(context)
+
+    val journalRepository: JournalRepository =
+        LocalJournalRepository(journalDatabase.journalDraftDao())
 
     val feedRepository: FeedRepository = FirestoreFeedRepository(service)
 
