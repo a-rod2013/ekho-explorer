@@ -25,7 +25,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.comp350sec001group2.ekhoexplorer.MapScreen
-import com.comp350sec001group2.ekhoexplorer.ui.loginscreen.AuthManager
+import com.comp350sec001group2.ekhoexplorer.Business.Authentication.AuthManager
 import com.comp350sec001group2.ekhoexplorer.ui.loginscreen.LoginScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
