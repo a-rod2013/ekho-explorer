@@ -1,5 +1,6 @@
 package com.comp350sec001group2.ekhoexplorer.Business.Journal
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import org.json.JSONArray
 
@@ -16,6 +17,16 @@ data class JournalDraftEntity(
     val photoPathsJson: String,
     val createdAtMillis: Long,
     val updatedAtMillis: Long,
+
+    @ColumnInfo(defaultValue = "1")
+    val revision: Long = 1L,
+
+    @ColumnInfo(defaultValue = "0")
+    val syncedRevision: Long = 0L,
+
+    @ColumnInfo(defaultValue = "NULL")
+    val deletedAtMillis: Long? = null,
+
 )
 
 internal fun JournalDraft.toEntity() = JournalDraftEntity(

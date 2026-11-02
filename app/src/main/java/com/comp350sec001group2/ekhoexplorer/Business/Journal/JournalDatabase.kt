@@ -20,7 +20,7 @@ abstract class JournalDatabase : RoomDatabase() {
             Room.databaseBuilder(
                 context.applicationContext,
                 JournalDatabase::class.java,
-                "jounral.db",
+                "journal.db",
             ).build()
     }
 }

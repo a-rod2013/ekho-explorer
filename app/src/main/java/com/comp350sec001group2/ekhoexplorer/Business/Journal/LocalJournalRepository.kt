@@ -41,9 +41,17 @@ class LocalJournalRepository(
         ownerId: String,
         draftId: String,
     ) {
-        require(ownerId.isNotBlank()) { "An owner ID is required." }
-        require(draftId.isNotBlank()) { "A draft ID is required." }
+        require(ownerId.isNotBlank()) {
+            "An owner ID is required."
+        }
+        require(draftId.isNotBlank()) {
+            "A draft ID is required."
+        }
 
-        dao.deleteDraft(ownerId, draftId)
+        dao.deleteDraft(
+            ownerId = ownerId,
+            draftId = draftId,
+            deletedAtMillis = System.currentTimeMillis()
+        )
     }
 }
