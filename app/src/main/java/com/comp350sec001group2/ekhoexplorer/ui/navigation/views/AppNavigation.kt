@@ -14,6 +14,7 @@ import com.comp350sec001group2.ekhoexplorer.MapScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
 
 @Composable
 fun AppNavigation() {
@@ -57,8 +58,15 @@ fun AppNavigation() {
             }
 
             composable(Screen.Feed.destination) {
-                FeedScreen()
+                FeedScreen(
+                    onOpenNotifications = { navController.navigate(Screen.Notifications.destination) },
+                )
             }
+
+            composable(Screen.Notifications.destination) {
+                NotificationsScreen(onBack = { navController.popBackStack() })
+            }
+
 
             // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
 

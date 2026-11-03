@@ -27,4 +27,8 @@ sealed class Screen(
         title = "Species"
     )
 
+    data object Notifications : Screen(
+        destination = "notifications",
+        title = "Notifications"
+    )
 }

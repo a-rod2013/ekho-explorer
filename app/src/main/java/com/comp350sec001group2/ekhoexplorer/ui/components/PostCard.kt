@@ -1,4 +1,4 @@
-package com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components
+package com.comp350sec001group2.ekhoexplorer.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +13,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
-
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 

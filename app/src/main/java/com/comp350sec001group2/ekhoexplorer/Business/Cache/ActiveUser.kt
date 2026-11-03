@@ -1,9 +1,15 @@
 package com.comp350sec001group2.ekhoexplorer.Business.Cache
 
+data class UserSettings(
+    /** Master switch for in-app notifications. */
+    val notificationsEnabled: Boolean = true,
+)
+
 data class ActiveUser(
     val userId: String,
     val userName: String,
     val avatarUrl: String? = null,
+    val settings: UserSettings = UserSettings(),
     val blockedUserIds: Set<String> = emptySet(),
     val hiddenUserIds: Set<String> = emptySet(),
 ) {
