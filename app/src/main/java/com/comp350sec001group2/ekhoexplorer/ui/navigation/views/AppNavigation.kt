@@ -9,11 +9,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.comp350sec001group2.ekhoexplorer.ProfileScreen
-import com.comp350sec001group2.ekhoexplorer.MapScreen
+import com.comp350sec001group2.ekhoexplorer.ui.map.MapScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
 
 @Composable
 fun AppNavigation() {
@@ -57,8 +57,15 @@ fun AppNavigation() {
             }
 
             composable(Screen.Feed.destination) {
-                FeedScreen()
+                FeedScreen(
+                    onOpenNotifications = { navController.navigate(Screen.Notifications.destination) },
+                )
             }
+
+            composable(Screen.Notifications.destination) {
+                NotificationsScreen(onBack = { navController.popBackStack() })
+            }
+
 
             // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
 

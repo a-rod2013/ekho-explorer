@@ -1,5 +1,6 @@
 package com.comp350sec001group2.ekhoexplorer.Business
 
+import android.content.Context
 import android.util.Log
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.ActiveUser
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
@@ -10,12 +11,17 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.Comme
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FeedRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreCommentRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreFeedRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreNotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreUserRelationsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalDatabase
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalPhotoStorage
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.LocalJournalRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
+import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
@@ -24,9 +30,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import android.content.Context
 
-
 class AppContainer(context: Context) {
     private val service = FirestoreService(Firebase.firestore)
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val journalDatabase = JournalDatabase.create(context)
 
@@ -35,18 +41,32 @@ class AppContainer(context: Context) {
     val journalRepository: JournalRepository =
         LocalJournalRepository(journalDatabase.journalDraftDao())
 
-    val feedRepository: FeedRepository = FirestoreFeedRepository(service)
+    val settingsRepository: SettingsRepository = SharedPrefsSettingsRepository(context)
+
+    /** See NotificationService. */
+    val notificationService = NotificationService(service)
+
+    val notificationRepository: NotificationRepository = FirestoreNotificationRepository(service, appScope)
+
+    val feedRepository: FeedRepository = FirestoreFeedRepository(service, notificationService)
 
     val userRelationsRepository: UserRelationsRepository = FirestoreUserRelationsRepository(service)
 
     /** Comments are per post, so each post screen asks for its own repository. */
     fun commentRepositoryFor(postId: String): CommentRepository =
-        FirestoreCommentRepository(service, postId, onCommentAdded = { feedRepository.onCommentAdded(postId) })
+        FirestoreCommentRepository(
+            service,
+            postId,
+            notificationService,
+            onCommentAdded = { feedRepository.onCommentAdded(postId) },
+        )
 
     init {
-        // temp until sign-in exists. Sign-in should call EhkoCache.setActiveUser(...) then userRelationsRepository.load() instead.
+        // TEMPORARY until sign-in exists. Sign-in should call EhkoCache.setActiveUser(...), then
+        // settingsRepository.load() and userRelationsRepository.load(), instead.
         EhkoCache.setActiveUser(ActiveUser(userId = TEST_USER_ID, userName = "Test User"))
-        CoroutineScope(SupervisorJob() + Dispatchers.Default).launch {
+        settingsRepository.load()
+        appScope.launch {
             try {
                 userRelationsRepository.load()
             } catch (e: FirestoreException) {

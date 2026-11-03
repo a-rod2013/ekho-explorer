@@ -1,4 +1,5 @@
-package com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components
+package com.comp350sec001group2.ekhoexplorer.ui.components
+
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,6 +38,10 @@ fun FeedHeader(
     onQueryChange: (String) -> Unit,
     onSearch: (String) -> Unit = {},
     modifier: Modifier = Modifier,
+    showSearch: Boolean = true,
+    /** Shows the notification bell at the end of the bar when set. */
+    onBellClick: (() -> Unit)? = null,
+    unreadNotifications: Int = 0,
 ) {
     val d = AppStyle.dimens
     Row(
@@ -49,12 +54,19 @@ fun FeedHeader(
         horizontalArrangement = Arrangement.spacedBy(d.md),
     ) {
         LogoPlaceholder()
-        SearchField(
-            query = query,
-            onQueryChange = onQueryChange,
-            onSearch = onSearch,
-            modifier = Modifier.weight(1f),
-        )
+        if (showSearch) {
+            SearchField(
+                query = query,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            Spacer(Modifier.weight(1f))
+        }
+        if (onBellClick != null) {
+            NotificationBell(unreadCount = unreadNotifications, onClick = onBellClick)
+        }
     }
 }
 

@@ -1,4 +1,4 @@
-package com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components
+package com.comp350sec001group2.ekhoexplorer.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
