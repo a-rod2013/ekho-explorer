@@ -1,8 +1,7 @@
-package com.comp350sec001group2.ekhoexplorer
+package com.comp350sec001group2.ekhoexplorer.ui.map
 
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import androidx.compose.ui.graphics.toArgb
-import android.graphics.Color
 import android.graphics.PointF
 import android.view.MotionEvent
 import androidx.compose.material3.Button
