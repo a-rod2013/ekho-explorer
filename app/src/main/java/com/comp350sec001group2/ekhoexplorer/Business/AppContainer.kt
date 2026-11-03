@@ -28,7 +28,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import android.content.Context
 
 class AppContainer(context: Context) {
     private val service = FirestoreService(Firebase.firestore)
