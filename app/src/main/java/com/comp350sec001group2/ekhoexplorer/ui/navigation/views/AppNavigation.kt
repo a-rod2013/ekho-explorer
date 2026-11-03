@@ -9,8 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.comp350sec001group2.ekhoexplorer.ProfileScreen
-import com.comp350sec001group2.ekhoexplorer.MapScreen
+import com.comp350sec001group2.ekhoexplorer.ui.map.MapScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
