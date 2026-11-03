@@ -57,20 +57,20 @@ class JournalSyncWorker(
             }
         } catch (cancellation: CancellationException) {
             throw cancellation
-        } catch (firesStoneFailure: FirestoreException) {
+        } catch (firestoreFailure: FirestoreException) {
             Log.w(
                 "JournalSync",
-                "Sync failed: ${firesStoneFailure.kind}",
-                firesStoneFailure,
+                "Sync failed: ${firestoreFailure.kind}",
+                firestoreFailure,
             )
 
-            when (firesStoneFailure.kind) {
+            when (firestoreFailure.kind) {
                 FirestoreErrorKind.UNAVAILABLE,
                 FirestoreErrorKind.TIMEOUT -> Result.retry()
 
                 else -> Result.failure(
                     workDataOf(
-                        "error" to firesStoneFailure.kind.toString())
+                        "error" to firestoreFailure.kind.toString())
                 )
             }
         } catch (unexpectedFailure: Exception) {
