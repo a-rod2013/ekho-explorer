@@ -14,15 +14,15 @@ import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.FieldJournalScreen
+import com.comp350sec001group2.ekhoexplorer.ProfileScreen
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
-
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination =
         backStackEntry?.destination?.route ?: Screen.Map.destination
-
     Scaffold(
         bottomBar = {
             AppBottomBar(
@@ -40,45 +40,34 @@ fun AppNavigation() {
         }
     )  { innerPadding ->
 
-        /**
-         * Call screen composable function here when adding a navbar addition
-         *
-         * i.e. MapScreen() --> [MapScreen]
-         *
-         * (hold ctrl or command and click on MapScreen to see the reference)
-         */
+        // register screens and their navigation destinations
         NavHost(
             navController = navController,
             startDestination = Screen.Map.destination,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(Screen.Journal.destination) {
+                FieldJournalScreen(
+                    onOpenSpecies = { navController.navigate(Screen.Species.destination) },
+                )
+            }
             composable(Screen.Map.destination) {
                 MapScreen()
             }
-
             composable(Screen.Feed.destination) {
                 FeedScreen(
                     onOpenNotifications = { navController.navigate(Screen.Notifications.destination) },
                 )
             }
-
             composable(Screen.Notifications.destination) {
                 NotificationsScreen(onBack = { navController.popBackStack() })
             }
-
-
-            // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
-
-//            composable(Screen.Profile.destination) {
-//                ProfileScreen()
-//            }
-
-            // species search screen
+            composable(Screen.Profile.destination) {
+                ProfileScreen()
+            }
             composable(Screen.Species.destination){
                 SpeciesSearchScreen()
             }
-
         }
-
     }
 }
