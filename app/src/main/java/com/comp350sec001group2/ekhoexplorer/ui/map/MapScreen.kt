@@ -54,6 +54,21 @@ fun MapScreen(modifier: Modifier = Modifier) {
         mutableStateMapOf<Long, ObservationMarker>()
     }
 
+    // Links grouped markers to their observations
+    val markerClusters = remember {
+        mutableStateMapOf<Long, ObservationCluster>()
+    }
+
+    // Tracks the expanded cluster
+    var expandedCluster by remember {
+        mutableStateOf<ObservationCluster?>(null)
+    }
+
+    // Stores markers displayed when a cluster expands
+    val expandedMarkers = remember {
+        mutableStateListOf<org.maplibre.android.annotations.Marker>()
+    }
+
     val mapView = remember {
         MapLibre.getInstance(context)
 
@@ -63,12 +78,42 @@ fun MapScreen(modifier: Modifier = Modifier) {
             getMapAsync { loadedMap ->
                 map = loadedMap
 
-                // Select the observation when its marker is tapped
+                // Handle observation and cluster marker clicks
                 loadedMap.setOnMarkerClickListener { marker ->
-                    selectedObservation = markerObservations[marker.id]
+                    val cluster = markerClusters[marker.id]
 
-                    // True means we handled the marker click
-                    selectedObservation != null
+                    if (cluster != null) {
+                        // Collapse any previously expanded cluster
+                        collapseCluster(
+                            map = loadedMap,
+                            expandedMarkers = expandedMarkers,
+                            markerObservations = markerObservations
+                        )
+                        expandedMarkers.clear()
+
+                        if (expandedCluster == cluster) {
+                            // Collapse the selected cluster
+                            expandedCluster = null
+                        } else {
+                            // Expand the selected cluster
+                            expandedCluster = cluster
+
+                            expandedMarkers.addAll(
+                                expandCluster(
+                                    context = context,
+                                    map = loadedMap,
+                                    cluster = cluster,
+                                    markerObservations = markerObservations
+                                )
+                            )
+                        }
+
+                        true
+                    } else {
+                        // Open details for an individual observation
+                        selectedObservation = markerObservations[marker.id]
+                        selectedObservation != null
+                    }
                 }
 
                 // Set the initial map location
@@ -163,24 +208,27 @@ fun MapScreen(modifier: Modifier = Modifier) {
                             // Save the observation in memory
                             observations.add(observation)
 
-                            // Create the icon based on the observation category
-                            val markerIcon = createObservationIcon(
-                                context = context,
-                                category = observation.category
-                            )
+                            // Refresh the map markers after saving
+                            map?.let { currentMap ->
 
-                            // Add the observation marker to the map
-                            val marker = map?.addMarker(
-                                MarkerOptions()
-                                    .position(observation.location)
-                                    .title(observation.displayName)
-                                    .snippet(observation.category.name)
-                                    .icon(markerIcon)
-                            )
+                                // Remove any expanded markers
+                                collapseCluster(
+                                    map = currentMap,
+                                    expandedMarkers = expandedMarkers,
+                                    markerObservations = markerObservations
+                                )
 
-                            // Link the marker to its observation
-                            if (marker != null) {
-                                markerObservations[marker.id] = observation
+                                expandedMarkers.clear()
+                                expandedCluster = null
+
+                                // Refresh observation clusters
+                                displayClusters(
+                                    context = context,
+                                    map = currentMap,
+                                    observations = observations,
+                                    markerObservations = markerObservations,
+                                    markerClusters = markerClusters
+                                )
                             }
 
                             // Move the camera to the observation
