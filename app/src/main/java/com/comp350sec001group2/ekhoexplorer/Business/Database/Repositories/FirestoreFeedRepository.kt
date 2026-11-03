@@ -34,6 +34,7 @@ class FirestoreFeedRepository(
 
     private val pager = Pager { cursor -> service.execute(GetFeedPageQuery(PAGE_SIZE, cursor)) }
 
+    // Get posts: load the next page, then mark which ones I have voted on.
     override suspend fun loadMore() {
         loadNextPage()
         keepLoadingWhileFeedLooksEmpty()
