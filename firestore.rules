@@ -1,0 +1,74 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /posts/{postId} {
+      allow read, write: if true;
+
+      match /comments/{commentId} { allow read, write: if true; }
+    }
+    match /votes/{voteId} { allow read, write: if true; }
+    match /commentVotes/{voteId} { allow read, write: if true; }
+    match /userRelations/{relationId} { allow read, write: if true; }
+    match /users/{userId}/notifications/{notificationId} { allow read, write: if true; }
+
+    match /users/{userId}/journalEntries/{entryId} {
+      function isOwner() {
+        return request.auth != null
+          && request.auth.uid == userId;
+      }
+
+      function validEntry() {
+        let data = request.resource.data;
+        let fields = [
+          'id',
+          'ownerId',
+          'title',
+          'notes',
+          'createdAtMillis',
+          'updatedAtMillis',
+          'revision',
+          'deletedAtMillis',
+          'syncedAt'
+        ];
+
+        return data.keys().hasAll(fields)
+          && data.keys().hasOnly(fields)
+          && data.id == entryId
+          && data.ownerId == userId
+          && data.title is string
+          && data.notes is string
+          && data.createdAtMillis is int
+          && data.createdAtMillis >= 0
+          && data.updatedAtMillis is int
+          && data.updatedAtMillis >= data.createdAtMillis
+          && data.revision is int
+          && data.revision >= 1
+          && (
+            data.deletedAtMillis == null
+            || (
+              data.deletedAtMillis is int
+              && data.deletedAtMillis >= 0
+              && data.title == ''
+              && data.notes == ''
+            )
+          )
+          && data.syncedAt == request.time;
+      }
+
+      allow read: if isOwner();
+
+      allow create: if isOwner() && validEntry();
+
+      allow update: if isOwner()
+        && validEntry()
+        && request.resource.data.createdAtMillis
+           == resource.data.createdAtMillis
+        && request.resource.data.revision > resource.data.revision
+        && resource.data.deletedAtMillis == null;
+
+      // Deletion is represented by a revisioned tombstone.
+      allow delete: if false;
+    }
+  }
+}

@@ -1,5 +1,6 @@
 package com.comp350sec001group2.ekhoexplorer.Business.Journal
 
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -7,6 +8,7 @@ import kotlinx.coroutines.flow.map
 
 class LocalJournalRepository(
     private val dao: JournalDraftDao,
+    private val onDraftChanged: (String) -> Unit = {},
 ): JournalRepository {
 
     override fun observeDrafts(
@@ -35,6 +37,7 @@ class LocalJournalRepository(
         require(draft.updatedAtMillis >= draft.createdAtMillis) { "Update time cannot precede creation time." }
 
         dao.saveDraft(draft.toEntity())
+        notifyChanged(draft.ownerId)
     }
 
     override suspend fun deleteDraft(
@@ -53,5 +56,14 @@ class LocalJournalRepository(
             draftId = draftId,
             deletedAtMillis = System.currentTimeMillis()
         )
+        notifyChanged(ownerId)
+    }
+    private fun notifyChanged(ownerId: String) {
+        try {
+            onDraftChanged(ownerId)
+        } catch (e: Exception) {
+            // The database change succeeded. Do not report it as a failed save.
+            Log.w("JournalSync", "Could not schedule journal sync", e)
+        }
     }
 }

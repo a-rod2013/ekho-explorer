@@ -12,6 +12,10 @@ class EkhoApp : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        if(SEED_SAMPLE_POSTS) container.seedSamplePosts()
+        container.startJournalSync()
+
+        if(SEED_SAMPLE_POSTS) {
+            container.seedSamplePosts()
+        }
     }
 }
