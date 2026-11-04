@@ -1,4 +1,4 @@
-package com.comp350sec001group2.ekhoexplorer.ui.photoTemp.views
+package com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.views
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -32,7 +32,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,13 +41,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.comp350sec001group2.ekhoexplorer.ui.photoTemp.viewmodels.NewPostViewModel
-import com.comp350sec001group2.ekhoexplorer.ui.photoTemp.viewmodels.newPostViewModelFactory
+import com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.viewmodels.NewPostViewModel
+import com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.viewmodels.newPostViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import androidx.compose.runtime.getValue
 
 /**
- * TEMPORARY page for making a post while the real create-post flow does not exist. It picks up to
- * five photos with the system photo picker (no permission needed), shrinks them, and posts.
+ * creates a feed post with a caption and up to 5 photos
  */
 @Composable
 fun NewPostScreen(
@@ -86,9 +85,17 @@ fun NewPostScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = onBack, enabled = !state.isPosting) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = AppStyle.colors.textPrimary)
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        "Back",
+                        tint = AppStyle.colors.textPrimary
+                    )
                 }
-                Text("New post (temporary)", style = AppStyle.type.username, color = AppStyle.colors.textPrimary)
+                Text(
+                    "New post",
+                    style = AppStyle.type.username,
+                    color = AppStyle.colors.textPrimary
+                )
             }
         },
     ) { padding ->
@@ -127,7 +134,11 @@ fun NewPostScreen(
                             enabled = !state.isPosting,
                             modifier = Modifier.align(Alignment.TopEnd).size(32.dp),
                         ) {
-                            Icon(Icons.Filled.Close, "Remove photo", tint = AppStyle.colors.onAccent)
+                            Icon(
+                                Icons.Filled.Close,
+                                "Remove photo",
+                                tint = AppStyle.colors.onAccent
+                            )
                         }
                     }
                 }

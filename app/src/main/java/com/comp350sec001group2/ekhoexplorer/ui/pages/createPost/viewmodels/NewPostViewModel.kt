@@ -1,9 +1,9 @@
-package com.comp350sec001group2.ekhoexplorer.ui.photoTemp.viewmodels
+package com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.viewmodels
 
 import android.content.ContentResolver
 import android.net.Uri
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** TEMPORARY screen state for creating a post. Replace with the real create-post flow later. */
+/** State for creating feed post. */
 data class NewPostUiState(
     val caption: String = "",
     val photos: List<Uri> = emptyList(),
@@ -66,7 +66,10 @@ class NewPostViewModel(
                 val sources = current.photos.map { uri ->
                     {
                         resolver.openInputStream(uri)
-                            ?: throw PhotoException(PhotoErrorKind.INVALID_IMAGE, "Could not open the photo")
+                            ?: throw PhotoException(
+                                PhotoErrorKind.INVALID_IMAGE,
+                                "Could not open the photo"
+                            )
                     }
                 }
                 val prepared = preparer.prepare(sources)
@@ -93,7 +96,11 @@ class NewPostViewModel(
 
 val newPostViewModelFactory = viewModelFactory {
     initializer {
-        val app = this[APPLICATION_KEY] as EkhoApp
-        NewPostViewModel(app.container.feedRepository, app.container.photoPreparer, app.contentResolver)
+        val app = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY] as EkhoApp
+        NewPostViewModel(
+            app.container.feedRepository,
+            app.container.photoPreparer,
+            app.contentResolver
+        )
     }
 }

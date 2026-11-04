@@ -25,7 +25,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.sessionView
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.SplashScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.FieldJournalScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
-import com.comp350sec001group2.ekhoexplorer.ui.photoTemp.views.NewPostScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.views.NewPostScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
 
