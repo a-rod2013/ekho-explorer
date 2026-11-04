@@ -110,6 +110,11 @@ class FirestoreFeedRepository(
         state.update { list -> list.filterNot { it.id == postId } }
     }
 
+    override suspend fun clear() {
+        pager.reset()
+        state.value = emptyList()
+    }
+
     override fun onCommentAdded(postId: String) {
         state.update { list -> list.map { if (it.id == postId) it.copy(commentCount = it.commentCount + 1) else it } }
     }

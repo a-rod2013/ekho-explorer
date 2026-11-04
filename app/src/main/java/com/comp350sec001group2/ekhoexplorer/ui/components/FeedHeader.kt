@@ -42,6 +42,9 @@ fun FeedHeader(
     /** Shows the notification bell at the end of the bar when set. */
     onBellClick: (() -> Unit)? = null,
     unreadNotifications: Int = 0,
+    /** Shows the account menu (signed-in name and Sign out) at the very end of the bar when set. */
+    onSignOut: (() -> Unit)? = null,
+    username: String = "",
 ) {
     val d = AppStyle.dimens
     Row(
@@ -66,6 +69,9 @@ fun FeedHeader(
         }
         if (onBellClick != null) {
             NotificationBell(unreadCount = unreadNotifications, onClick = onBellClick)
+        }
+        if (onSignOut != null) {
+            AccountMenu(username = username, onSignOut = onSignOut)
         }
     }
 }
