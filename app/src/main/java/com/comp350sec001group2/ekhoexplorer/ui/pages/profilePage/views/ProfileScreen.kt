@@ -1,36 +1,27 @@
 
 package com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views
 
-import android.graphics.Paint
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.ProfileUiState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.ProfileViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.compose.foundation.border
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.IconButton
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.ui.graphics.Color
-
 
 @Composable
 fun ProfileScreen(
@@ -60,24 +51,22 @@ fun ProfileScreenContent(
         containerColor = AppStyle.colors.background
     ) { innerPadding ->
 
-        Box(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .padding(innerPadding),
+            contentPadding = PaddingValues(bottom = AppStyle.dimens.lg)
         ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
 
-                // Profile header
+            // Profile header
+            item(span = { GridItemSpan(3) }) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(AppStyle.dimens.lg),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-
-                    // Profile picture
                     AsyncImage(
                         model = uiState.avatarUrl,
                         contentDescription = "Profile picture",
@@ -85,29 +74,22 @@ fun ProfileScreenContent(
                         contentScale = ContentScale.Crop
                     )
 
-                    // Profile information
                     Column(
-                        modifier = Modifier.padding(
-                            start = AppStyle.dimens.md
-                        ),
+                        modifier = Modifier.padding(start = AppStyle.dimens.md),
                         verticalArrangement = Arrangement.Center
                     ) {
-
-                        // Display name
                         Text(
                             text = uiState.displayName,
                             style = MaterialTheme.typography.titleLarge,
                             color = AppStyle.colors.textPrimary
                         )
 
-                        // Username
                         Text(
                             text = "@${uiState.username}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = AppStyle.colors.textSecondary
                         )
 
-                        // Join date
                         Text(
                             text = "Explorer since ${uiState.joinDate}",
                             modifier = Modifier.padding(top = AppStyle.dimens.sm),
@@ -116,8 +98,10 @@ fun ProfileScreenContent(
                         )
                     }
                 }
+            }
 
-                // Profile statistics
+            // Profile statistics
+            item(span = { GridItemSpan(3) }) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -135,8 +119,10 @@ fun ProfileScreenContent(
                         label = "Species"
                     )
                 }
+            }
 
-                // Bio container
+            // Bio
+            item(span = { GridItemSpan(3) }) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -144,7 +130,6 @@ fun ProfileScreenContent(
                         .padding(vertical = AppStyle.dimens.xl)
                 ) {
                     if (uiState.isEditingBio) {
-                        // Editing bio
                         Column(
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -190,7 +175,6 @@ fun ProfileScreenContent(
                                 .padding(end = AppStyle.dimens.xl)
                         )
 
-                        // Edit icon
                         IconButton(
                             onClick = onEditBio,
                             modifier = Modifier
@@ -203,13 +187,51 @@ fun ProfileScreenContent(
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit bio",
-                                tint = AppStyle.colors.textSecondary,
+                                tint = AppStyle.colors.textSecondary
                             )
                         }
                     }
-
                 }
+            }
 
+            // Post divider
+            item(span = { GridItemSpan(3) }) {
+                HorizontalDivider(
+                    color = AppStyle.colors.divider
+                )
+            }
+
+            // Post thumbnails
+            items(
+                items = uiState.posts,
+                key = { post -> post.id }
+            ) { post ->
+
+                val thumbnailUrl = post.imageUrls.firstOrNull()
+
+                if (thumbnailUrl != null) {
+                    AsyncImage(
+                        model = thumbnailUrl,
+                        contentDescription = post.caption,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "No image",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppStyle.colors.textSecondary
+                        )
+                    }
+                }
             }
         }
     }
