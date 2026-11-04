@@ -113,7 +113,7 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                             navController.navigate(Screen.Notifications.destination)
                         },
                         onNewPost = {
-                            navController.navigate(Screen.Camera.destination) {
+                            navController.navigate(Screen.NewPost.destination) {
                                 launchSingleTop = true
                             }
                         },
@@ -137,6 +137,12 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                                 launchSingleTop = true
                             }
                         }
+                    )
+                }
+
+                composable(Screen.NewPost.destination) {
+                    NewPostScreen(
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
