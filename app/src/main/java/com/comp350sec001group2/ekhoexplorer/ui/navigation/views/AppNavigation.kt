@@ -23,14 +23,11 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScre
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.SessionViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.sessionViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.SplashScreen
-import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.FieldJournalScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
 import com.comp350sec001group2.ekhoexplorer.ui.photoTemp.views.NewPostScreen
+import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 
-/**
- * The root of the UI. The first thing it does is find out whether someone is signed in:
- * a splash while that is checked, then the login screens or the main app.
- */
 @Composable
 fun AppNavigation(
     sessionViewModel: SessionViewModel = viewModel(factory = sessionViewModelFactory),
@@ -48,20 +45,18 @@ fun AppNavigation(
 private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
     val navController = rememberNavController()
 
-    // Decided once, when the host first appears. Later sign-ins and sign-outs are handled by
-    // AuthNavigationEffect, which navigates (and pops the old group) instead.
-    val startRoute = remember { if (authState is AuthState.SignedIn) MAIN_ROUTE else AUTH_ROUTE }
-
+    // temp authentication navigation
+    val startRoute = remember {
+        if (authState is AuthState.SignedIn) MAIN_ROUTE else AUTH_ROUTE
+    }
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination =
         backStackEntry?.destination?.route ?: Screen.Map.destination
-
-    // No nav bar on the login and sign-up screens.
-    val showBottomBar = backStackEntry?.destination?.hierarchy?.any { it.route == MAIN_ROUTE }
-        ?: (startRoute == MAIN_ROUTE)
-
+    // show the bottom bar only inside the main app
+    val showBottomBar =
+        backStackEntry?.destination?.hierarchy?.any { it.route == MAIN_ROUTE }
+            ?: (startRoute == MAIN_ROUTE)
     AuthNavigationEffect(navController, authState)
-
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
@@ -79,58 +74,62 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                 )
             }
         }
-    )  { innerPadding ->
-
-        /**
-         * Call screen composable function here when adding a navbar addition
-         *
-         * i.e. MapScreen() --> [MapScreen]
-         *
-         * (hold ctrl or command and click on MapScreen to see the reference)
-         *
-         * New navbar screens go inside the "main" group below.
-         */
+    ) { innerPadding ->
         NavHost(
             navController = navController,
             startDestination = startRoute,
             modifier = Modifier.padding(innerPadding)
         ) {
+            // temp login and account creation screens
             authGraph(navController)
 
-            navigation(startDestination = Screen.Map.destination, route = MAIN_ROUTE) {
+            // main application screens
+            navigation(
+                startDestination = Screen.Map.destination,
+                route = MAIN_ROUTE
+            ) {
+                composable(Screen.Journal.destination) {
+                    FieldJournalScreen(
+                        onOpenSpecies = {
+                            navController.navigate(Screen.Species.destination)
+                        }
+                    )
+                }
+
                 composable(Screen.Map.destination) {
                     MapScreen()
                 }
 
                 composable(Screen.Feed.destination) {
                     FeedScreen(
-                        onOpenNotifications = { navController.navigate(Screen.Notifications.destination) },
-                        onNewPost = { navController.navigate(Screen.NewPost.destination) },
+                        onOpenNotifications = {
+                            navController.navigate(Screen.Notifications.destination)
+                        },
+                        onNewPost = {
+                            navController.navigate(Screen.NewPost.destination)
+                        },
                         onSignOut = onSignOut,
                     )
                 }
 
                 composable(Screen.Notifications.destination) {
-                    NotificationsScreen(onBack = { navController.popBackStack() })
+                    NotificationsScreen(
+                        onBack = { navController.popBackStack() }
+                    )
                 }
 
                 composable(Screen.NewPost.destination) {
                     NewPostScreen(onBack = { navController.popBackStack() })
                 }
 
-                // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
+                // profile is temporarily disabled pending a crash fix
 
-//            composable(Screen.Profile.destination) {
-//                ProfileScreen()
-//            }
-
-                // species search screen
-                composable(Screen.Species.destination){
-                    SpeciesSearchScreen()
+                composable(Screen.Species.destination) {
+                    SpeciesSearchScreen(
+                        onBack = { navController.popBackStack() }
+                    )
                 }
             }
-
         }
-
     }
 }
