@@ -25,6 +25,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.sessionView
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.SplashScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.FieldJournalScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
+import com.comp350sec001group2.ekhoexplorer.ui.photoTemp.views.NewPostScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 
 @Composable
@@ -104,6 +105,9 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                         onOpenNotifications = {
                             navController.navigate(Screen.Notifications.destination)
                         },
+                        onNewPost = {
+                            navController.navigate(Screen.NewPost.destination)
+                        },
                         onSignOut = onSignOut,
                     )
                 }
@@ -112,6 +116,10 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                     NotificationsScreen(
                         onBack = { navController.popBackStack() }
                     )
+                }
+
+                composable(Screen.NewPost.destination) {
+                    NewPostScreen(onBack = { navController.popBackStack() })
                 }
 
                 // profile is temporarily disabled pending a crash fix

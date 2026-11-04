@@ -35,4 +35,10 @@ sealed class Screen(
         destination = "notifications",
         title = "Notifications"
     )
+
+    // TEMP, JUST FOR TESTING PHOTOS
+    data object NewPost : Screen(
+        destination = "newPost",
+        title = "New post"
+    )
 }
