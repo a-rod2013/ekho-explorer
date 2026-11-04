@@ -1,6 +1,7 @@
 package com.comp350sec001group2.ekhoexplorer.Business.Database
 
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.DocumentSnapshot
 import java.time.Instant
 import kotlin.coroutines.cancellation.CancellationException
@@ -44,6 +45,10 @@ class DocumentData(
 
     fun double(name: String): Double = doubleOrNull(name) ?: missing(name)
     fun doubleOrNull(name: String): Double? = typed(name, "number") { (it as? Number)?.toDouble() }
+
+    /** A Firestore bytes field (`Blob`). */
+    fun bytes(name: String): ByteArray = bytesOrNull(name) ?: missing(name)
+    fun bytesOrNull(name: String): ByteArray? = typed(name, "bytes") { (it as? Blob)?.toBytes() }
 
     fun instant(name: String): Instant = instantOrNull(name) ?: missing(name)
     fun instantOrNull(name: String): Instant? = typed(name, "timestamp") {

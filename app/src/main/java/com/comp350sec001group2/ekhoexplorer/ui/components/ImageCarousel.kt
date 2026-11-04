@@ -47,7 +47,7 @@ fun ImageCarousel(imageUrls: List<String>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
+internal fun PageDots(count: Int, current: Int, modifier: Modifier = Modifier) {
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(AppStyle.dimens.xs)) {
         repeat(count) { index ->
             Box(

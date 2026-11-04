@@ -10,5 +10,7 @@ object PostFields {
     const val UP_COUNT = "upCount"
     const val DOWN_COUNT = "downCount"
     const val COMMENT_COUNT = "commentCount"
+
+    const val PHOTO_COUNT = "photoCount"
     const val CREATED_AT = "createdAt"
 }

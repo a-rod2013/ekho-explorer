@@ -15,6 +15,6 @@ object PostMapper : DocumentReader<Post> {
         myVote = Vote.NONE,        // filled in later, see GetFeedVotesQuery
         userId = doc.stringOrNull(PostFields.USER_ID) ?: "",
         commentCount = doc.longOrNull(PostFields.COMMENT_COUNT)?.toInt() ?: 0,
+        photoCount = doc.longOrNull(PostFields.PHOTO_COUNT)?.toInt() ?: 0,
     )
 }
-

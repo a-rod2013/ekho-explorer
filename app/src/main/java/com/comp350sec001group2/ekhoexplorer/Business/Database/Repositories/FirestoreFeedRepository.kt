@@ -2,9 +2,12 @@ package com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories
 
 
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Batches.AddFeedPostWithPhotosBatch
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.AddFeedPostCommand
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.DeleteFeedPostCommand
+import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreErrorKind
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreException
+import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreIds
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreService
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.NotificationType
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
@@ -14,6 +17,8 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetFeedPag
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetFeedVotesQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.VoteOnFeedPostTransaction
 import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.EncodedPhoto
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -23,6 +28,7 @@ import kotlinx.coroutines.flow.update
 class FirestoreFeedRepository(
     private val service: FirestoreService,
     private val notifications: NotificationService,
+    private val photos: PhotoRepository,
 ) : FeedRepository {
 
     private val state = MutableStateFlow<List<Post>>(emptyList())
@@ -98,15 +104,25 @@ class FirestoreFeedRepository(
     }
 
     // Add a post, then reload so it appears at the top.
-    override suspend fun addPost(caption: String, imageUrls: List<String>) {
+    override suspend fun addPost(caption: String, imageUrls: List<String>, photos: List<EncodedPhoto>) {
         val user = EhkoCache.activeUser
-        service.execute(AddFeedPostCommand(user.userId, user.userName, user.avatarUrl, imageUrls, caption))
+        if (photos.isEmpty()) {
+            service.execute(AddFeedPostCommand(user.userId, user.userName, user.avatarUrl, imageUrls, caption))
+        } else {
+            if (imageUrls.isNotEmpty()) {
+                throw FirestoreException(FirestoreErrorKind.INVALID_ARGUMENT, "A post uses image URLs or stored photos, not both")
+            }
+            service.execute(
+                AddFeedPostWithPhotosBatch(FirestoreIds.newId(), user.userId, user.userName, user.avatarUrl, caption, photos),
+            )
+        }
         refresh()
     }
 
     // Delete in the database first, then drop it from the screen.
     override suspend fun deletePost(postId: String) {
         service.execute(DeleteFeedPostCommand(postId, EhkoCache.activeUser.userId))
+        photos.forget(postId)
         state.update { list -> list.filterNot { it.id == postId } }
     }
 

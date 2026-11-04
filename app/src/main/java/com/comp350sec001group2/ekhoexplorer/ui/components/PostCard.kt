@@ -38,8 +38,9 @@ fun PostCard(
                 onBlockUser = onBlockUser,
             )
         }
-        if (post.imageUrls.isNotEmpty()) {
-            ImageCarousel(imageUrls = post.imageUrls)
+        when {
+            post.photoCount > 0 -> PhotoCarousel(postId = post.id, count = post.photoCount)
+            post.imageUrls.isNotEmpty() -> ImageCarousel(imageUrls = post.imageUrls)
         }
         Row(
             modifier = Modifier.padding(horizontal = d.sm, vertical = d.xs),

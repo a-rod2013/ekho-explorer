@@ -25,6 +25,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.sessionView
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.SplashScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
+import com.comp350sec001group2.ekhoexplorer.ui.photoTemp.views.NewPostScreen
 
 /**
  * The root of the UI. The first thing it does is find out whether someone is signed in:
@@ -104,6 +105,7 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                 composable(Screen.Feed.destination) {
                     FeedScreen(
                         onOpenNotifications = { navController.navigate(Screen.Notifications.destination) },
+                        onNewPost = { navController.navigate(Screen.NewPost.destination) },
                         onSignOut = onSignOut,
                     )
                 }
@@ -112,6 +114,9 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                     NotificationsScreen(onBack = { navController.popBackStack() })
                 }
 
+                composable(Screen.NewPost.destination) {
+                    NewPostScreen(onBack = { navController.popBackStack() })
+                }
 
                 // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
 
