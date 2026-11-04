@@ -19,6 +19,17 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.Prof
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.ProfileViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.graphics.Color
 
 
 @Composable
@@ -27,11 +38,23 @@ fun ProfileScreen(
 ) {
     val uiState = viewModel.uiState
 
-    ProfileScreenContent(uiState = uiState)
+    ProfileScreenContent(
+        uiState = uiState,
+        onEditBio = viewModel::startEditingBio,
+        onBioDraftChange = viewModel::updateBioDraft,
+        onSaveBio = viewModel::saveBio,
+        onCancelBio = viewModel::cancelEditingBio
+    )
 }
 
 @Composable
-fun ProfileScreenContent(uiState: ProfileUiState) {
+fun ProfileScreenContent(
+    uiState: ProfileUiState,
+    onEditBio: () -> Unit,
+    onBioDraftChange: (String) -> Unit,
+    onSaveBio: () -> Unit,
+    onCancelBio: () -> Unit
+) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = AppStyle.colors.background
@@ -84,7 +107,7 @@ fun ProfileScreenContent(uiState: ProfileUiState) {
                             color = AppStyle.colors.textSecondary
                         )
 
-                        // Explorer since
+                        // Join date
                         Text(
                             text = "Explorer since ${uiState.joinDate}",
                             modifier = Modifier.padding(top = AppStyle.dimens.sm),
@@ -111,6 +134,80 @@ fun ProfileScreenContent(uiState: ProfileUiState) {
                         count = uiState.species,
                         label = "Species"
                     )
+                }
+
+                // Bio container
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = AppStyle.dimens.lg)
+                        .padding(vertical = AppStyle.dimens.xl)
+                ) {
+                    if (uiState.isEditingBio) {
+                        // Editing bio
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            BasicTextField(
+                                value = uiState.bioDraft,
+                                onValueChange = onBioDraftChange,
+                                modifier = Modifier.fillMaxWidth(),
+                                textStyle = MaterialTheme.typography.bodyMedium.copy(
+                                    color = AppStyle.colors.textPrimary
+                                ),
+                                decorationBox = { innerTextField ->
+                                    if (uiState.bioDraft.isEmpty()) {
+                                        Text(
+                                            text = "What do you want to write?",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = AppStyle.colors.textSecondary
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                TextButton(onClick = onCancelBio) {
+                                    Text("Cancel")
+                                }
+
+                                TextButton(onClick = onSaveBio) {
+                                    Text("Save Edits")
+                                }
+                            }
+                        }
+                    } else {
+                        Text(
+                            text = uiState.bio,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AppStyle.colors.textPrimary,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = AppStyle.dimens.xl)
+                        )
+
+                        // Edit icon
+                        IconButton(
+                            onClick = onEditBio,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(AppStyle.dimens.icon),
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = Color.Transparent
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit bio",
+                                tint = AppStyle.colors.textSecondary,
+                            )
+                        }
+                    }
+
                 }
 
             }
@@ -147,6 +244,10 @@ fun ProfileStat(
 @Composable
 fun ProfileScreenPreview() {
     ProfileScreenContent(
-        uiState = ProfileUiState()
+        uiState = ProfileUiState(),
+        onEditBio = {},
+        onBioDraftChange = {},
+        onSaveBio = {},
+        onCancelBio = {}
     )
 }
