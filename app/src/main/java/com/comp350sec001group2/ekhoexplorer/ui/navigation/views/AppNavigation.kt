@@ -25,6 +25,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.sessionView
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.SplashScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
 
 /**
  * The root of the UI. The first thing it does is find out whether someone is signed in:
@@ -113,11 +114,11 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                 }
 
 
-                // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
+            // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
 
-//            composable(Screen.Profile.destination) {
-//                ProfileScreen()
-//            }
+            composable(Screen.Profile.destination) {
+                ProfileScreen()
+            }
 
                 // species search screen
                 composable(Screen.Species.destination){

@@ -1,11 +1,13 @@
 
 package com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -22,25 +24,67 @@ import coil.compose.AsyncImage
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.ProfileUiState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.ProfileViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.Surface
+import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
+import androidx.compose.ui.window.Dialog
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.fillMaxWidth
+import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val uiState = viewModel.uiState
+    var selectedPost by remember { mutableStateOf<Post?>(null) }
 
     ProfileScreenContent(
         uiState = uiState,
         onEditBio = viewModel::startEditingBio,
         onBioDraftChange = viewModel::updateBioDraft,
         onSaveBio = viewModel::saveBio,
-        onCancelBio = viewModel::cancelEditingBio
+        onCancelBio = viewModel::cancelEditingBio,
+        onPostClick = { post ->
+            selectedPost = post
+        }
     )
+
+    selectedPost?.let { post ->
+        Dialog(
+            onDismissRequest = {
+                selectedPost = null
+            }
+        ) {
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                color = AppStyle.colors.background
+            ) {
+                PostCard(
+                    post = post,
+                    onVote = {},
+                    isOwner = false,
+                    onOpenComments = {},
+                    onDelete = {},
+                    onHideUser = {},
+                    onBlockUser = {}
+                )
+            }
+        }
+    }
+
 }
 
 @Composable
 fun ProfileScreenContent(
     uiState: ProfileUiState,
+    onPostClick: (Post) -> Unit,
     onEditBio: () -> Unit,
     onBioDraftChange: (String) -> Unit,
     onSaveBio: () -> Unit,
@@ -215,7 +259,10 @@ fun ProfileScreenContent(
                         contentDescription = post.caption,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1f),
+                            .aspectRatio(1f)
+                            .clickable {
+                                onPostClick(post)
+                            },
                         contentScale = ContentScale.Crop
                     )
                 } else {
@@ -270,6 +317,7 @@ fun ProfileScreenPreview() {
         onEditBio = {},
         onBioDraftChange = {},
         onSaveBio = {},
-        onCancelBio = {}
+        onCancelBio = {},
+        onPostClick = {}
     )
 }
