@@ -28,20 +28,23 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
-import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.IconButton
 
-
-// sample storage for Sprint 1
 data class Species(
     val name: String,
     val scientificName: String,
     val category: String,
     val imageUrl: String
 )
-
-// sample screen info for Sprint 1
 val sampleSpecies = listOf(
     Species(
         name = "California Poppy",
@@ -106,12 +109,11 @@ val sampleSpecies = listOf(
 )
 
 @Composable
-fun SpeciesSearchScreen() {
-    // remembers the text entered in the search bar
+fun SpeciesSearchScreen(
+    onBack: () -> Unit = {}
+) {
     var searchText by remember { mutableStateOf("") }
-    // remembers the selected category
     var selectedCategory by remember { mutableStateOf("All") }
-    // Filters sample species by category and search text
     val filteredSpecies = sampleSpecies.filter { species ->
         (selectedCategory == "All" || species.category == selectedCategory) &&
             (
@@ -120,47 +122,69 @@ fun SpeciesSearchScreen() {
                     species.scientificName.contains(searchText, ignoreCase = true)
                 )
     }
-    // follows the same screen structure as the Activity Feed
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = AppStyle.colors.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-
-        // reuses the Activity Feed header and search bar
         topBar = {
-            FeedHeader(
-                query = searchText,
-                onQueryChange = { searchText = it },
-                onSearch = { searchText = it }
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(AppStyle.dimens.lg),
+                verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.md)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = AppStyle.colors.textPrimary
+                        )
+                    }
+
+                    Text(
+                        text = "Species Search",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = AppStyle.colors.textPrimary
+                    )
+                }
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search") },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = null
+                        )
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(50)
+                )
+            }
         }
     ) { padding ->
-
-        // keeps results scrollable within the screen
         LazyColumn(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
         ) {
-
-            // category selection section
             item {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(AppStyle.dimens.lg)
                 ) {
-
                     Text(
                         text = "Explore Categories",
                         color = AppStyle.colors.textPrimary
                     )
-
                     Spacer(
                         modifier = Modifier.height(AppStyle.dimens.md)
                     )
-
-                    // displays four categories (plants, animals, insects, fungi)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
@@ -184,24 +208,19 @@ fun SpeciesSearchScreen() {
                                 )
                             }
                     }
-
                     Spacer(
                         modifier = Modifier.height(AppStyle.dimens.lg)
                     )
-
                     Text(
                         text = "Sample Species",
                         color = AppStyle.colors.textPrimary
                     )
                 }
             }
-
-            // displays matching species
             items(
                 items = filteredSpecies,
                 key = { species -> species.name }
             ) { species ->
-
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -217,8 +236,6 @@ fun SpeciesSearchScreen() {
                             ),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-
-                        // loads the photograph using Coil and adjusts the size
                         AsyncImage(
                             model = species.imageUrl,
                             contentDescription = species.name,
@@ -227,33 +244,26 @@ fun SpeciesSearchScreen() {
                                 .size(80.dp)
                                 .background(AppStyle.colors.surface)
                         )
-
-                        // displays common and scientific names
                         Column(
                             modifier = Modifier.padding(
                                 start = AppStyle.dimens.md
                             )
                         ) {
-
                             Text(
                                 text = species.name,
                                 color = AppStyle.colors.textPrimary
                             )
-
                             Text(
                                 text = species.scientificName,
                                 color = AppStyle.colors.textSecondary
                             )
                         }
                     }
-                    // same divider color as the Activity Feed
                     HorizontalDivider(
                         color = AppStyle.colors.divider
                     )
                 }
             }
-
-            // displays a message when there is no species match
             if (filteredSpecies.isEmpty()) {
                 item {
                     Text(
@@ -267,7 +277,6 @@ fun SpeciesSearchScreen() {
     }
 }
 
-// preview using the shared theme
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 private fun SpeciesSearchScreenPreview() {
