@@ -3,7 +3,7 @@
 In a nutshell, the system takes a photo, compresses it, and then encodes it into a lossy webp. This then gets stored as raw bytes in the database.
 
 ## Important Note
-The system only supports the activity feed right now. Meaning, photos can only be uploaded to the database and loaded via the activity page/post. 
+The system only supports the activity feed right now. Meaning, photos can only be uploaded to the database and loaded via the activity page/post.
 
 The system will need more development time in order to support other pages, like the observation journal but, as of writing this, we are out of time for sprint 2.
 
@@ -41,4 +41,3 @@ This is already handled by the post card
 
 ## Cache
 There is a interface to handle caching the photos but it is not hooked up to anything currently.
-

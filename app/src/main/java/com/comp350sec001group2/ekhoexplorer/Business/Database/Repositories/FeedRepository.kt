@@ -22,5 +22,3 @@ interface FeedRepository {
     /** Forgets everything loaded, including the paging position. Called on sign-out so the next user starts clean. */
     suspend fun clear()
 }
-
-
