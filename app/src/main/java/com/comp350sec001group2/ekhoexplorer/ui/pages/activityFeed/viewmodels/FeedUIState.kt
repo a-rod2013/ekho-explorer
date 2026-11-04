@@ -11,6 +11,7 @@ data class FeedUIState(
     val query: String="",
     val isRefreshing: Boolean = false,
     val currentUserId: String = "",
+    val currentUserName: String = "",
     val isLoading: Boolean = true,
     val hasHiddenUsers: Boolean = false,
 )

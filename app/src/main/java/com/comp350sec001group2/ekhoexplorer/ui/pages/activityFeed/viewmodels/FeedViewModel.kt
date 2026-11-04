@@ -49,6 +49,7 @@ class FeedViewModel(
                 error = e,
                 isRefreshing = r,
                 currentUserId = user.userId,
+                currentUserName = user.userName,
                 isLoading = l,
                 hasHiddenUsers = user.blockedUserIds.isNotEmpty() || user.hiddenUserIds.isNotEmpty(),
             )
