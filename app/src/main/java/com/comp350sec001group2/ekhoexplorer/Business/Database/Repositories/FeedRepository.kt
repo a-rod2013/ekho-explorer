@@ -17,5 +17,8 @@ interface FeedRepository {
 
     /** Tells the feed a comment was added to [postId], so the shown count stays right. */
     fun onCommentAdded(postId: String)
+
+    /** Forgets everything loaded, including the paging position. Called on sign-out so the next user starts clean. */
+    suspend fun clear()
 }
 

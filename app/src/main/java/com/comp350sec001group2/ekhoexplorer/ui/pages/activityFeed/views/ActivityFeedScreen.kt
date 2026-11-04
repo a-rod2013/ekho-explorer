@@ -40,6 +40,7 @@ fun FeedScreen(
     onAccountClick: () -> Unit = {},
     onSearch: (String) -> Unit = {},
     onOpenNotifications: () -> Unit = {},
+    onSignOut: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadNotifications by viewModel.unreadNotifications.collectAsStateWithLifecycle()
@@ -58,6 +59,7 @@ fun FeedScreen(
         onBlockUser = viewModel::onBlockUser,
         unreadNotifications = unreadNotifications,
         onOpenNotifications = onOpenNotifications,
+        onSignOut = onSignOut,
     )
 
     commentsPostId?.let { postId ->
@@ -81,6 +83,7 @@ fun FeedScreenContent(
     onBlockUser: (userId: String) -> Unit = {},
     unreadNotifications: Int = 0,
     onOpenNotifications: () -> Unit = {},
+    onSignOut: (() -> Unit)? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState.error) {
@@ -106,6 +109,8 @@ fun FeedScreenContent(
                 showSearch = false,
                 onBellClick = onOpenNotifications,
                 unreadNotifications = unreadNotifications,
+                onSignOut = onSignOut,
+                username = uiState.currentUserName,
             )
         },
     ) { padding ->
