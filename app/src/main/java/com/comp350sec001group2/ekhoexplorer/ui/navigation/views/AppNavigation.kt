@@ -25,9 +25,6 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.sessionView
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.SplashScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.FieldJournalScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
-
-//  import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
-
 import com.comp350sec001group2.ekhoexplorer.ui.photoTemp.views.NewPostScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 
@@ -126,26 +123,17 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                     NewPostScreen(onBack = { navController.popBackStack() })
                 }
 
-//<<<<<<< HEAD
-//            // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT REMOVE
-//
-//            composable(Screen.Profile.destination) {
-//                ProfileScreen()
-//            }
-//
-//                // species search screen
-//                composable(Screen.Species.destination){
-//                    SpeciesSearchScreen()
-//=======
-//                // profile is temporarily disabled pending a crash fix
-//
-//                composable(Screen.Species.destination) {
-//                    SpeciesSearchScreen(
-//                        onBack = { navController.popBackStack() }
-//                    )
-//>>>>>>> origin/develop
+
+                // profile is temporarily disabled pending a crash fix
+
+                composable(Screen.Species.destination) {
+                    SpeciesSearchScreen(
+                        onBack = { navController.popBackStack() }
+                    )
+
                 }
             }
         }
     }
+}
 
