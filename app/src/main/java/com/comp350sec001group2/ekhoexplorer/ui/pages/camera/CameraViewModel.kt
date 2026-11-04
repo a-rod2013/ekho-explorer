@@ -41,7 +41,6 @@ class CameraViewModel(
     var error by mutableStateOf<String?>(null)
         private set
 
-    private var uploadedUrl: String? = null
 
     fun updateCaption(value: String) {
         caption = value
@@ -59,7 +58,6 @@ class CameraViewModel(
         if (success && path != null) {
             photoPath?.let { File(it).delete() }
             photoPath = path
-            uploadedUrl = null
         } else {
             path?.let { File(it).delete() }
         }
@@ -71,51 +69,41 @@ class CameraViewModel(
     }
 
     fun discardPhoto() {
-        photoPath?.let { File(it).delete() }
+        if (!posted) {
+            photoPath?.let { File(it).delete() }
+        }
+
         photoPath = null
         caption = ""
-        uploadedUrl = null
         error = null
     }
 
     fun postPhoto(uri: Uri) {
         if (isPosting || posted) return
 
-        val userId = EhkoCache.activeUser.userId
-        if (userId.isBlank()) {
+        if (EhkoCache.activeUser.userId.isBlank()) {
             error = "Sign in before posting."
             return
         }
 
-        // Keep the submitted values consistent during the upload.
         val submittedCaption = caption.trim()
+        val submittedUri = uri.toString()
 
         isPosting = true
         error = null
 
         viewModelScope.launch {
             try {
-                val imageUrl = uploadedUrl ?: run {
-                    val reference = FirebaseStorage.getInstance()
-                        .reference
-                        .child("feed_photos/$userId/${UUID.randomUUID()}.jpg")
-
-                    reference.putFile(uri).await()
-                    reference.downloadUrl.await().toString().also {
-                        uploadedUrl = it
-                    }
-                }
-
                 repository.addPost(
                     submittedCaption,
-                    listOf(imageUrl)
+                    listOf(submittedUri)
                 )
 
                 posted = true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                error = e.localizedMessage ?: "Could not post the photo."
+                error = e.localizedMessage ?: "Could not create the local post."
             } finally {
                 isPosting = false
             }

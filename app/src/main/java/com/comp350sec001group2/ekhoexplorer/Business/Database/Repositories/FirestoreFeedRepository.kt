@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 /** The signed-in user comes from [EhkoCache.activeUser]. */
 class FirestoreFeedRepository(
@@ -27,9 +28,17 @@ class FirestoreFeedRepository(
 
     private val state = MutableStateFlow<List<Post>>(emptyList())
 
-    // Filtering lives here (not in the loaded list) so blocking someone hides their posts instantly.
-    override val posts: Flow<List<Post>> = combine(state, EhkoCache.activeUserFlow) { list, user ->
-        list.filterNot { user.hidesPostsFrom(it.userId) }
+    //temporary posts while app is running
+    private val localPosts = MutableStateFlow<List<Post>>(emptyList())
+
+    override val posts: Flow<List<Post>> = combine(state, localPosts, EhkoCache.activeUserFlow) { remotePosts, temporaryPosts, user ->
+        val myLocalPosts = temporaryPosts.filter {
+            it.userId == user.userId
+        }
+
+        (myLocalPosts + remotePosts).filterNot {
+            user.hidesPostsFrom(it.userId)
+        }
     }
 
     private val pager = Pager { cursor -> service.execute(GetFeedPageQuery(PAGE_SIZE, cursor)) }
@@ -75,6 +84,22 @@ class FirestoreFeedRepository(
 
     // Like or dislike: update the screen immediately, then confirm with the database.
     override suspend fun vote(postId: String, tapped: Vote) {
+
+        if (postId.startsWith("local-")) {
+            localPosts.update { posts ->
+                posts.map { post ->
+                    if (post.id == postId &&
+                        post.userId == EhkoCache.activeUser.userId
+                    ) {
+                        post.withVote(tapped)
+                    } else {
+                        post
+                    }
+                }
+            }
+            return
+        }
+
         val original = state.value.firstOrNull { it.id == postId } ?: return
         replace(original.withVote(tapped))
         val result = try {
@@ -97,15 +122,56 @@ class FirestoreFeedRepository(
         }
     }
 
-    // Add a post, then reload so it appears at the top.
+    // Adds a temp post to the top of feed
     override suspend fun addPost(caption: String, imageUrls: List<String>) {
         val user = EhkoCache.activeUser
-        service.execute(AddFeedPostCommand(user.userId, user.userName, user.avatarUrl, imageUrls, caption))
+
+        if (imageUrls.isNotEmpty() &&
+            imageUrls.all { it.startsWith("content://") }
+        ) {
+            val post = Post(
+                id = "local-${UUID.randomUUID()}",
+                username = user.userName,
+                avatarUrl = user.avatarUrl,
+                imageUrls = imageUrls,
+                caption = caption,
+                upCount = 0,
+                downCount = 0,
+                userId = user.userId
+            )
+
+            localPosts.update { current ->
+                listOf(post) + current
+            }
+
+            return
+        }
+
+        service.execute(
+            AddFeedPostCommand(
+                user.userId,
+                user.userName,
+                user.avatarUrl,
+                imageUrls,
+                caption
+            )
+        )
         refresh()
     }
 
     // Delete in the database first, then drop it from the screen.
     override suspend fun deletePost(postId: String) {
+
+        if (postId.startsWith("local-")) {
+            localPosts.update { posts ->
+                posts.filterNot {
+                    it.id == postId &&
+                        it.userId == EhkoCache.activeUser.userId
+                }
+            }
+            return
+        }
+
         service.execute(DeleteFeedPostCommand(postId, EhkoCache.activeUser.userId))
         state.update { list -> list.filterNot { it.id == postId } }
     }
@@ -113,6 +179,7 @@ class FirestoreFeedRepository(
     override suspend fun clear() {
         pager.reset()
         state.value = emptyList()
+        localPosts.value = emptyList()
     }
 
     override fun onCommentAdded(postId: String) {
