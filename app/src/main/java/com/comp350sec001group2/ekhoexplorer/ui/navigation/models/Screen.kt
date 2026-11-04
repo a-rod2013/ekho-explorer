@@ -36,9 +36,14 @@ sealed class Screen(
         title = "Notifications"
     )
 
-    // TEMP, JUST FOR TESTING PHOTOS
+    // Feed post creation
     data object NewPost : Screen(
         destination = "newPost",
         title = "New post"
+    )
+
+    data object Camera : Screen(
+        destination = "camera",
+        title = "Camera"
     )
 }

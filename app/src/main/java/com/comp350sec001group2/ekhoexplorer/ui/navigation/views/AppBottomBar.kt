@@ -59,8 +59,8 @@ fun AppBottomBar(
                 val selected = currentDestination == screen.destination
                 NavigationBarItem(
                     selected = selected,
-                    // disable action and profile until their navigation is ready
-                    enabled = screen != Screen.Action && screen != Screen.Profile,
+                    // disable profile until their navigation is ready
+                    enabled = screen != Screen.Profile,
                     onClick = { onNavigate(screen) },
                     icon = {
                         Icon(
