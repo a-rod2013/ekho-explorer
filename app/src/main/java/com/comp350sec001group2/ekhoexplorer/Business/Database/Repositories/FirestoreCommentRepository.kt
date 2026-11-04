@@ -4,12 +4,14 @@ import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreException
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreService
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Comment
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.NotificationType
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Pager
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetCommentVotesQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetCommentsPageQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.AddCommentTransaction
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.VoteOnCommentTransaction
+import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.update
 class FirestoreCommentRepository(
     private val service: FirestoreService,
     private val postId: String,
+    private val notifications: NotificationService,
     private val onCommentAdded: () -> Unit = {},
 ) : CommentRepository {
 
@@ -61,22 +64,42 @@ class FirestoreCommentRepository(
         )
         state.update { it + created }
         onCommentAdded()
+        notifications.send(NotificationType.POST_COMMENT, postId = postId, preview = created.text, commentId = id)
     }
 
-    // Up or down vote. update the screen immediately, then confirm with the database.
+    // Up or down vote: update the screen immediately, then confirm with the database.
     override suspend fun vote(commentId: String, tapped: Vote) {
         val original = state.value.firstOrNull { it.id == commentId } ?: return
         replace(original.withVote(tapped))
-        try {
+        val result = try {
             service.execute(VoteOnCommentTransaction(postId, commentId, EhkoCache.activeUser.userId, tapped))
         } catch (e: FirestoreException) {
             replace(original)
             throw e
+        }
+
+        // Tell the comment's author about a new like, or take the notice back if the like was removed.
+        if (result == Vote.UP) {
+            notifications.send(
+                NotificationType.COMMENT_LIKE,
+                postId = postId,
+                preview = original.text,
+                commentId = commentId,
+                recipientId = original.userId,
+            )
+        } else if (original.myVote == Vote.UP) {
+            notifications.retract(
+                NotificationType.COMMENT_LIKE,
+                postId = postId,
+                commentId = commentId,
+                recipientId = original.userId,
+            )
         }
     }
 
     private fun replace(comment: Comment) =
         state.update { list -> list.map { if (it.id == comment.id) comment else it } }
 
+    // Stays under the 30-id limit of GetCommentVotesQuery.
     private companion object { const val PAGE_SIZE = 20 }
 }

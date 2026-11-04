@@ -32,4 +32,9 @@ sealed class Screen(
         title = "Camera"
     )
 
+    data object Notifications : Screen(
+        destination = "notifications",
+        title = "Notifications"
+    )
+
 }
