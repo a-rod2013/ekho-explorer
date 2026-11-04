@@ -15,9 +15,12 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.Fires
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreUserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.ImageService.ImageService
+import com.comp350sec001group2.ekhoexplorer.Business.ImageService.SupabaseConfig
 import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
+import com.google.firebase.BuildConfig
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
@@ -39,6 +42,11 @@ class AppContainer(context: Context) {
     val feedRepository: FeedRepository = FirestoreFeedRepository(service, notificationService)
 
     val userRelationsRepository: UserRelationsRepository = FirestoreUserRelationsRepository(service)
+
+    val imageService: ImageService = ImageService.create(
+        cacheDir = File(context.cacheDir, "images"),
+        config = SupabaseConfig(BuildConfig.SUPABASE_URL, BuildConfig.SUPABASE_KEY, BuildConfig.SUPABASE_BUCKET),
+    )
 
     /** Comments are per post, so each post screen asks for its own repository. */
     fun commentRepositoryFor(postId: String): CommentRepository =
