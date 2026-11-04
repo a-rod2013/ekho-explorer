@@ -1,5 +1,6 @@
 package com.comp350sec001group2.ekhoexplorer.ui.pages.camera
 
+import android.content.ContentResolver
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -10,17 +11,20 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreException
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FeedRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoErrorKind
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoException
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoPreparer
 import com.comp350sec001group2.ekhoexplorer.EkhoApp
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.tasks.await
 import java.io.File
-import java.util.UUID
 
 class CameraViewModel(
-    private val repository: FeedRepository
+    private val repository: FeedRepository,
+    private val preparer: PhotoPreparer,
+    private val resolver: ContentResolver
 ) : ViewModel() {
 
     var photoPath by mutableStateOf<String?>(null)
@@ -40,7 +44,6 @@ class CameraViewModel(
 
     var error by mutableStateOf<String?>(null)
         private set
-
 
     fun updateCaption(value: String) {
         caption = value
@@ -69,10 +72,8 @@ class CameraViewModel(
     }
 
     fun discardPhoto() {
-        if (!posted) {
-            photoPath?.let { File(it).delete() }
-        }
-
+        // The feed now loads the saved photo from the database.
+        photoPath?.let { File(it).delete() }
         photoPath = null
         caption = ""
         error = null
@@ -87,23 +88,54 @@ class CameraViewModel(
         }
 
         val submittedCaption = caption.trim()
-        val submittedUri = uri.toString()
 
         isPosting = true
         error = null
 
         viewModelScope.launch {
             try {
+                val sources = listOf(
+                    {
+                        resolver.openInputStream(uri)
+                            ?: throw PhotoException(
+                                PhotoErrorKind.INVALID_IMAGE,
+                                "Could not open the photo"
+                            )
+                    }
+                )
+
+                val prepared = preparer.prepare(sources)
+
                 repository.addPost(
-                    submittedCaption,
-                    listOf(submittedUri)
+                    caption = submittedCaption,
+                    imageUrls = emptyList(),
+                    photos = prepared
                 )
 
                 posted = true
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: PhotoException) {
+                error = when (e.kind) {
+                    PhotoErrorKind.UNSUPPORTED_TYPE ->
+                        "Only JPEG, PNG and WebP photos can be posted."
+
+                    PhotoErrorKind.INVALID_IMAGE ->
+                        "The photo could not be read."
+
+                    PhotoErrorKind.INPUT_TOO_LARGE ->
+                        "The photo is too large."
+
+                    PhotoErrorKind.TOO_DETAILED ->
+                        "The photo could not be compressed enough. Try another."
+
+                    PhotoErrorKind.TOO_MANY_PHOTOS ->
+                        "Too many photos were selected."
+                }
+            } catch (e: FirestoreException) {
+                error = "Could not post (${e.kind}). Please check the feed before retrying."
             } catch (e: Exception) {
-                error = e.localizedMessage ?: "Could not create the local post."
+                error = e.localizedMessage ?: "Could not post the photo."
             } finally {
                 isPosting = false
             }
@@ -114,6 +146,11 @@ class CameraViewModel(
 val cameraViewModelFactory = viewModelFactory {
     initializer {
         val app = this[APPLICATION_KEY] as EkhoApp
-        CameraViewModel(app.container.feedRepository)
+
+        CameraViewModel(
+            repository = app.container.feedRepository,
+            preparer = app.container.photoPreparer,
+            resolver = app.contentResolver
+        )
     }
 }

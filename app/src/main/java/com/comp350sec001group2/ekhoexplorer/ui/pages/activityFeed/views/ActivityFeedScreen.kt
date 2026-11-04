@@ -5,12 +5,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,6 +31,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
 import com.comp350sec001group2.ekhoexplorer.ui.components.EmptyState
 import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
+import com.comp350sec001group2.ekhoexplorer.ui.components.LocalPhotoLoader
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedViewModel
@@ -41,26 +47,31 @@ fun FeedScreen(
     onSearch: (String) -> Unit = {},
     onOpenNotifications: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
+    /** TEMPORARY: shows a "+" button that opens the stand-in new post page. */
+    onNewPost: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadNotifications by viewModel.unreadNotifications.collectAsStateWithLifecycle()
     var commentsPostId by rememberSaveable { mutableStateOf<String?>(null) }
 
-    FeedScreenContent(
-        uiState = uiState,
-        onQueryChange = viewModel::onQueryChange,
-        onSearch = onSearch,
-        onVote = viewModel::onVote,
-        onAccountClick = onAccountClick,
-        onRefresh = viewModel::onRefresh,
-        onOpenComments = { postId -> commentsPostId = postId },
-        onDeletePost = viewModel::onDeletePost,
-        onHideUser = viewModel::onHideUser,
-        onBlockUser = viewModel::onBlockUser,
-        unreadNotifications = unreadNotifications,
-        onOpenNotifications = onOpenNotifications,
-        onSignOut = onSignOut,
-    )
+    CompositionLocalProvider(LocalPhotoLoader provides viewModel.photos) {
+        FeedScreenContent(
+            uiState = uiState,
+            onQueryChange = viewModel::onQueryChange,
+            onSearch = onSearch,
+            onVote = viewModel::onVote,
+            onAccountClick = onAccountClick,
+            onRefresh = viewModel::onRefresh,
+            onOpenComments = { postId -> commentsPostId = postId },
+            onDeletePost = viewModel::onDeletePost,
+            onHideUser = viewModel::onHideUser,
+            onBlockUser = viewModel::onBlockUser,
+            unreadNotifications = unreadNotifications,
+            onOpenNotifications = onOpenNotifications,
+            onSignOut = onSignOut,
+            onNewPost = onNewPost,
+        )
+    }
 
     commentsPostId?.let { postId ->
         CommentsSheet(postId = postId, onDismiss = { commentsPostId = null })
@@ -84,6 +95,7 @@ fun FeedScreenContent(
     unreadNotifications: Int = 0,
     onOpenNotifications: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
+    onNewPost: (() -> Unit)? = null,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState.error) {
@@ -96,6 +108,13 @@ fun FeedScreenContent(
         // The header and bottom bar apply their own system-bar insets.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (onNewPost != null) {
+                FloatingActionButton(onClick = onNewPost) {
+                    Icon(Icons.Filled.Add, contentDescription = "New post")
+                }
+            }
+        },
 
         // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
         // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
