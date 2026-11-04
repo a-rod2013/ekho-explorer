@@ -2,6 +2,7 @@ package com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories
 
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.EncodedPhoto
 import kotlinx.coroutines.flow.Flow
 
 interface FeedRepository {
@@ -10,7 +11,7 @@ interface FeedRepository {
     suspend fun loadMore()
     suspend fun refresh()
     suspend fun vote(postId: String, tapped: Vote)
-    suspend fun addPost(caption: String, imageUrls: List<String>)
+    suspend fun addPost(caption: String, imageUrls: List<String>, photos: List<EncodedPhoto> = emptyList())
 
     /** Deletes the post for good. Only its author can do this. */
     suspend fun deletePost(postId: String)
@@ -21,4 +22,3 @@ interface FeedRepository {
     /** Forgets everything loaded, including the paging position. Called on sign-out so the next user starts clean. */
     suspend fun clear()
 }
-
