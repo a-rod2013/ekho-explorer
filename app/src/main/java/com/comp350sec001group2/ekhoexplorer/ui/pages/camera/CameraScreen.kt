@@ -63,7 +63,11 @@ fun CameraScreen(
                 directory
             )
 
-            viewModel.prepareCapture(file.absolutePath)
+            // Prevents camera from launching when authentication/saving does not permit a new capture
+            if (!viewModel.prepareCapture(file.absolutePath)) {
+                file.delete()
+                return
+            }
 
             val uri = FileProvider.getUriForFile(
                 context,
@@ -84,8 +88,10 @@ fun CameraScreen(
         }
     }
 
-    BackHandler(enabled = viewModel.isPosting) {
-        // Wait for the current submission.
+    BackHandler(
+        enabled = viewModel.isPosting || viewModel.isSavingJournal
+    ) {
+        // Wait for the current save or submission
     }
 
     Column(
@@ -96,7 +102,7 @@ fun CameraScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
-            text = "Create a post",
+            text = "Capture an observation",
             style = MaterialTheme.typography.headlineSmall
         )
 
@@ -126,19 +132,49 @@ fun CameraScreen(
                 minLines = 2
             )
 
+            when {
+                viewModel.isSavingJournal -> {
+                    Text("Saving to journal…")
+                }
+
+                viewModel.journalError != null -> {
+                    Text(
+                        text = viewModel.journalError
+                            ?: "Could not save the journal entry.",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+
+                    OutlinedButton(
+                        onClick = viewModel::retryJournalSave,
+                        enabled = !viewModel.isPosting,
+                    ) {
+                        Text("Retry journal save")
+                    }
+                }
+
+                viewModel.journalSaved -> {
+                    Text("Saved to your private journal. Photos stay on this device.")
+                }
+            }
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Button(
                     onClick = { viewModel.postPhoto(photoUri) },
-                    enabled = !viewModel.isPosting && !viewModel.posted
+                    enabled = !viewModel.isPosting &&
+                        !viewModel.posted &&
+                        !viewModel.isSavingJournal &&
+                        viewModel.journalSaved,
                 ) {
-                    Text(if (viewModel.isPosting) "Posting…" else "Post")
+                    Text(if (viewModel.isPosting) "Posting…" else "Post to feed")
                 }
 
                 OutlinedButton(
                     onClick = { openCamera() },
                     enabled = !viewModel.isPosting &&
+                        !viewModel.isSavingJournal &&
+                        viewModel.journalSaved &&
                         viewModel.pendingPath == null
                 ) {
                     Text("Retake")
@@ -146,9 +182,11 @@ fun CameraScreen(
 
                 OutlinedButton(
                     onClick = { viewModel.discardPhoto() },
-                    enabled = !viewModel.isPosting
+                    enabled = !viewModel.isPosting &&
+                    !viewModel.isSavingJournal &&
+                    viewModel.journalSaved,
                 ) {
-                    Text("Cancel")
+                    Text("Close")
                 }
             }
         }
