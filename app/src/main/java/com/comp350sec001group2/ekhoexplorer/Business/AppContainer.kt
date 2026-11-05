@@ -20,6 +20,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.Fires
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreUserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalCaptureStoring
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalDatabase
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalIdentity
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalPhotoStorage
@@ -71,6 +72,20 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
                 }
             },
         )
+
+    val journalCaptureStoring = JournalCaptureStoring(
+        repository = journalRepository,
+        photoStorage = journalPhotoStorage,
+        scope = appScope,
+        ownerProvider = {
+            val fireBaseOwner = journalIdentity.currentOwnerId()
+            val activeUser = EhkoCache.activeUser
+
+            fireBaseOwner?. takeIf {
+                activeUser.isSignedIn && activeUser.userId == it
+            }
+        }
+    )
 
     val settingsRepository: SettingsRepository = SharedPrefsSettingsRepository(context)
 
