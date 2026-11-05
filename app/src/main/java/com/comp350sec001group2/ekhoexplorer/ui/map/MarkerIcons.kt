@@ -18,13 +18,11 @@ fun createObservationIcon(
     val density = context.resources.displayMetrics.density
     val size = (48 * density).toInt()
     val iconSize = (26 * density).toInt()
-
     val bitmap = Bitmap.createBitmap(
         size,
         size,
         Bitmap.Config.ARGB_8888
     )
-
     val canvas = Canvas(bitmap)
 
     // Choose the marker color and drawable
@@ -41,24 +39,30 @@ fun createObservationIcon(
             backgroundColor = Color.rgb(50, 121, 200)
             drawableId = R.drawable.ic_animal_marker
         }
-    }
 
+        ObservationCategory.INSECT -> {
+            backgroundColor = Color.rgb(180, 124, 50)
+            drawableId = R.drawable.ic_animal_marker
+        }
+
+        ObservationCategory.FUNGI -> {
+            backgroundColor = Color.rgb(139, 99, 173)
+            drawableId = R.drawable.ic_fungi_marker
+        }
+    }
     // Draw the colored circle
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = backgroundColor
         style = Paint.Style.FILL
     }
-
     canvas.drawCircle(
         size / 2f,
         size / 2f,
         size / 2f,
         paint
     )
-
     // Draw the white leaf or paw in the center
     val drawable = ContextCompat.getDrawable(context, drawableId)
-
     drawable?.setBounds(
         (size - iconSize) / 2,
         (size - iconSize) / 2,
@@ -67,7 +71,6 @@ fun createObservationIcon(
     )
 
     drawable?.draw(canvas)
-
     // Convert the bitmap into a MapLibre marker icon
     return IconFactory.getInstance(context).fromBitmap(bitmap)
 }
