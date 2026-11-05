@@ -255,27 +255,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 }
             )
 
-            // Zoom in
-            Button(
-                onClick = {
-                    map?.animateCamera(
-                        CameraUpdateFactory.zoomIn()
-                    )
-                }
-            ) {
-                Text("+")
-            }
 
-            // Zoom out
-            Button(
-                onClick = {
-                    map?.animateCamera(
-                        CameraUpdateFactory.zoomOut()
-                    )
-                }
-            ) {
-                Text("-")
-            }
         }
     }
     // Show details for the selected observation

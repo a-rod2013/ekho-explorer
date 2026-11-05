@@ -12,6 +12,8 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FeedRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.NoPhotoLoader
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoLoader
 import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,6 +26,8 @@ class FeedViewModel(
     private val repository: FeedRepository,
     private val relations: UserRelationsRepository,
     notifications: NotificationRepository,
+    /** Where the feed's photo carousels get stored photos from. */
+    val photos: PhotoLoader = NoPhotoLoader,
 ) : ViewModel() {
 
     /** Unread notifications, for the bell badge. */
@@ -100,6 +104,7 @@ val feedViewModelFactory = viewModelFactory {
             app.container.feedRepository,
             app.container.userRelationsRepository,
             app.container.notificationRepository,
+            app.container.photoRepository,
         )
     }
 }

@@ -28,6 +28,12 @@ import com.comp350sec001group2.ekhoexplorer.Business.Journal.LocalJournalReposit
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalSyncCoordinator
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalSyncScheduler
 import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.CachedPhotoRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.FirestorePhotoStore
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.NoPhotoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoPreparer
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -38,7 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class AppContainer(context: Context) {
+class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
     private val service = FirestoreService(Firebase.firestore)
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -73,7 +79,11 @@ class AppContainer(context: Context) {
 
     val notificationRepository: NotificationRepository = FirestoreNotificationRepository(service, appScope)
 
-    val feedRepository: FeedRepository = FirestoreFeedRepository(service, notificationService)
+    val photoRepository: PhotoRepository = CachedPhotoRepository(FirestorePhotoStore(service), photoCache)
+
+    val photoPreparer = PhotoPreparer()
+
+    val feedRepository: FeedRepository = FirestoreFeedRepository(service, notificationService, photoRepository)
 
     val userRelationsRepository: UserRelationsRepository = FirestoreUserRelationsRepository(service)
 

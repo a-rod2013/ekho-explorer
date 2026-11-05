@@ -58,6 +58,8 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.3.0")
 
+    implementation("com.google.firebase:firebase-storage")
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
