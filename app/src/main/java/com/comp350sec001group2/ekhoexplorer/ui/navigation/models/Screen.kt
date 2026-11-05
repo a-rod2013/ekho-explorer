@@ -16,16 +16,16 @@ sealed class Screen(
     )
     data object Action : Screen(
         destination = "action",
-        title = "Action"
+        title = "Camera"
     )
     data object Feed : Screen(
         destination = "feed",
         title = "Feed"
     )
-    data object Profile : Screen(
-        destination = "profile",
-        title = "Profile"
-    )
+//    data object Profile : Screen(
+//        destination = "profile",
+//        title = "Profile"
+//    )
     // additional screens outside the main navigation bar
     data object Species : Screen(
         destination = "Species",
