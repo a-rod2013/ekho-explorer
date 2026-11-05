@@ -30,10 +30,28 @@ import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 import java.util.UUID
+import androidx.compose.runtime.rememberCoroutineScope
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalDraft
+import com.comp350sec001group2.ekhoexplorer.EkhoApp
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val app = context.applicationContext as EkhoApp
+    val journalRepository = app.container.journalRepository
+    val journalPhotoStorage = app.container.journalPhotoStorage
+    val coroutineScope = rememberCoroutineScope()
+
+    val activeUser by EhkoCache.activeUserFlow.collectAsState()
+
+    var mapStyleReady by remember {
+        mutableStateOf(false)
+    }
 
     var map by remember {
         mutableStateOf<MapLibreMap?>(null)
@@ -135,11 +153,64 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         "EkhoMap",
                         "Map style loaded. Number of layers: ${style.layers.size}"
                     )
+                    mapStyleReady = true
                 }
             }
         }
     }
+    // Restore saved Journal observations when the Map is ready
+    LaunchedEffect(activeUser.userId, mapStyleReady) {
 
+        if (!mapStyleReady) return@LaunchedEffect
+
+        if (!activeUser.isSignedIn) {
+            observations.clear()
+
+            map?.let { currentMap ->
+                displayClusters(
+                    context = context,
+                    map = currentMap,
+                    observations = observations,
+                    markerObservations = markerObservations,
+                    markerClusters = markerClusters
+                )
+            }
+
+            return@LaunchedEffect
+        }
+        journalRepository.observeDrafts(activeUser.userId)
+            .collect { entries ->
+
+                // Reconstruct saved Map observations
+                val restoredObservations = entries.mapNotNull {
+                    it.toObservationMarker()
+                }
+
+                // Replace temporary observations with Room data
+                observations.clear()
+                observations.addAll(restoredObservations)
+
+                // Reset expanded marker state
+                expandedMarkers.clear()
+                expandedCluster = null
+                selectedObservation = null
+
+                // Refresh the markers on the Map
+                map?.let { currentMap ->
+                    displayClusters(
+                        context = context,
+                        map = currentMap,
+                        observations = observations,
+                        markerObservations = markerObservations,
+                        markerClusters = markerClusters,
+                    )
+                }
+                Log.d(
+                    "MapJournal",
+                    "Restored ${restoredObservations.size} observations",
+                )
+            }
+    }
     // Manage the MapView lifecycle
     DisposableEffect(mapView) {
         mapView.onStart()
@@ -207,6 +278,58 @@ fun MapScreen(modifier: Modifier = Modifier) {
 
                             // Save the observation in memory
                             observations.add(observation)
+                            // Save the observation to the user's Journal
+                            val user = EhkoCache.activeUser
+
+                            if (user.isSignedIn) {
+                                coroutineScope.launch {
+                                    try {
+                                        // Import the observation photo into Journal storage
+                                        val savedPhotoPath = journalPhotoStorage.importPhoto(
+                                            ownerId = user.userId,
+                                            source = photoUri
+                                        )
+
+                                        // Create the Journal entry
+                                        val timestamp = System.currentTimeMillis()
+
+                                        val journalEntry = JournalDraft(
+                                            id = observation.id,
+                                            ownerId = user.userId,
+                                            title = commonName,
+                                            notes = """
+                                                Scientific name: $scientificName
+                                                Category: $category
+                                                Description: $description
+                                                Location: ${location.latitude}, ${location.longitude}
+                                            """.trimIndent(),
+                                            photoPaths = listOf(savedPhotoPath),
+                                            createdAtMillis = timestamp,
+                                            updatedAtMillis = timestamp
+                                        )
+
+                                        // Save the entry to Room
+                                        journalRepository.saveDraft(journalEntry)
+
+                                        Log.d(
+                                            "MapJournal",
+                                            "Journal entry saved: ${journalEntry.id}"
+                                        )
+
+                                    } catch (e: Exception) {
+                                        Log.e(
+                                            "MapJournal",
+                                            "Failed to save observation to Journal",
+                                            e
+                                        )
+                                    }
+                                }
+                            } else {
+                                Log.w(
+                                    "MapJournal",
+                                    "Observation not saved to Journal: user is signed out"
+                                )
+                            }
 
                             // Refresh the map markers after saving
                             map?.let { currentMap ->

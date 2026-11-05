@@ -1,9 +1,7 @@
+
 package com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views
 
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,9 +22,20 @@ fun ObservationCard(
 ) {
     val colors = AppStyle.colors
     val dimens = AppStyle.dimens
+
+    // Extract category and location from observation notes
+    val category = entry.notes.lines()
+        .firstOrNull { it.startsWith("Category:", ignoreCase = true) }
+        ?.substringAfter(":")
+        ?.trim()
+
+    val location = entry.notes.lines()
+        .firstOrNull { it.startsWith("Location:", ignoreCase = true) }
+        ?.substringAfter(":")
+        ?.trim()
+
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column {
             entry.photoPaths.firstOrNull()?.let { path ->
@@ -39,9 +48,12 @@ fun ObservationCard(
                     contentScale = ContentScale.Crop
                 )
             }
+
             Column(
-                modifier = Modifier.padding(dimens.md)
+                modifier = Modifier.padding(dimens.md),
+                verticalArrangement = Arrangement.spacedBy(dimens.xs)
             ) {
+                // Common name
                 Text(
                     text = entry.title.ifBlank { "Untitled" },
                     style = MaterialTheme.typography.titleMedium,
@@ -49,6 +61,8 @@ fun ObservationCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+
+                // Date
                 Text(
                     text = DateFormat.getDateInstance().format(
                         Date(entry.createdAtMillis)
@@ -56,13 +70,25 @@ fun ObservationCard(
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.textSecondary
                 )
-                Text(
-                    text = entry.notes,
-                    style = AppStyle.type.caption,
-                    color = colors.textSecondary,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
+
+                // Category
+                if (!category.isNullOrBlank()) {
+                    Text(
+                        text = category.lowercase()
+                            .replaceFirstChar { it.uppercase() },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textSecondary
+                    )
+                }
+
+                // Location - same text size as date
+                if (!location.isNullOrBlank()) {
+                    Text(
+                        text = "Location: $location",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = colors.textSecondary
+                    )
+                }
             }
         }
     }

@@ -1,32 +1,23 @@
+
 package com.comp350sec001group2.ekhoexplorer.ui.map
 
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -49,7 +40,7 @@ fun ObservationForm(
         mutableStateOf(ObservationCategory.PLANT)
     }
 
-    // Load the observation photo
+    // Load the captured observation photo
     val photoBitmap = remember(photoUri) {
         context.contentResolver.openInputStream(photoUri)?.use {
             BitmapFactory.decodeStream(it)
@@ -58,76 +49,120 @@ fun ObservationForm(
 
     Column(
         modifier = Modifier
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("New Observation")
 
-        // Show the captured photo
+        // Larger photo preview
         photoBitmap?.let { bitmap ->
             Image(
                 bitmap = bitmap.asImageBitmap(),
                 contentDescription = "Observation photo",
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp),
+                    .height(200.dp)
+                    .clip(RoundedCornerShape(12.dp)),
                 contentScale = ContentScale.Crop
             )
         }
 
-        // Optional common name
+        // Common Name - Required
+        Text(
+            text = "Common Name",
+            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelMedium
+        )
+
         OutlinedTextField(
             value = commonName,
             onValueChange = { commonName = it },
-            label = { Text("Common Name (Optional)") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
-        // Optional scientific name
+        // Scientific Name - Optional
+        Text(
+            text = "Scientific Name (Optional)",
+            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelMedium
+        )
+
         OutlinedTextField(
             value = scientificName,
             onValueChange = { scientificName = it },
-            label = { Text("Scientific Name (Optional)") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
-        Text("Category")
+        // Category selection
+        Text(
+            text = "Category",
+            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelMedium
+        )
 
-        // Choose plant or animal
-        ObservationCategory.entries.forEach { option ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                RadioButton(
-                    selected = category == option,
-                    onClick = { category = option }
-                )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            ObservationCategory.entries
+                .chunked(2)
+                .forEach { rowCategories ->
 
-                Text(
-                    option.name.lowercase()
-                        .replaceFirstChar { it.uppercase() }
-                )
-            }
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        rowCategories.forEach { option ->
+
+                            FilterChip(
+                                selected = category == option,
+                                onClick = { category = option },
+                                label = {
+                                    Text(
+                                        option.name.lowercase()
+                                            .replaceFirstChar {
+                                                it.uppercase()
+                                            }
+                                    )
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
         }
 
-        // Optional description
+        // Description
+        Text(
+            text = "Description",
+            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelMedium
+        )
+
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
-            label = { Text("Description (Optional)") },
             modifier = Modifier.fillMaxWidth(),
-            minLines = 3
+            minLines = 2,
+            maxLines = 3
         )
 
+        // Standard Android action button arrangement
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             TextButton(onClick = onCancel) {
                 Text("Cancel")
             }
 
+            Spacer(modifier = Modifier.width(8.dp))
+
             Button(
+                enabled = commonName.isNotBlank(),
                 onClick = {
                     onSave(
                         commonName.trim(),
