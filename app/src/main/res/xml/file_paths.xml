@@ -5,6 +5,6 @@
     path="observations/" />
 
   <files-path
-    name = "observation_photos"
+    name = "post_photos"
     path = "photos/" />
 </paths>
