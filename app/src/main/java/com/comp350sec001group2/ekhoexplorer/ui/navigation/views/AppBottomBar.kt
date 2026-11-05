@@ -44,7 +44,7 @@ fun AppBottomBar(
         Screen.Map to Icons.Filled.Explore,
         Screen.Action to Icons.Filled.CameraAlt,
         Screen.Feed to Icons.Filled.Forum,
-        Screen.Profile to Icons.Filled.Person
+        //Screen.Profile to Icons.Filled.Person
     )
 
     Box {
@@ -60,7 +60,7 @@ fun AppBottomBar(
                 NavigationBarItem(
                     selected = selected,
                     // disable profile until their navigation is ready
-                    enabled = screen != Screen.Profile,
+                    //enabled = screen != Screen.Profile,
                     onClick = { onNavigate(screen) },
                     icon = {
                         Icon(

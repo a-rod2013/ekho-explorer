@@ -47,8 +47,6 @@ fun FeedScreen(
     onSearch: (String) -> Unit = {},
     onOpenNotifications: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
-    /** TEMPORARY: shows a "+" button that opens the stand-in new post page. */
-    onNewPost: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadNotifications by viewModel.unreadNotifications.collectAsStateWithLifecycle()
@@ -69,7 +67,6 @@ fun FeedScreen(
             unreadNotifications = unreadNotifications,
             onOpenNotifications = onOpenNotifications,
             onSignOut = onSignOut,
-            onNewPost = onNewPost,
         )
     }
 
