@@ -20,10 +20,14 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.Fires
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreUserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.UserRelationsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalCaptureStoring
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalDatabase
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalIdentity
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalPhotoStorage
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.LocalJournalRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalSyncCoordinator
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalSyncScheduler
 import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.CachedPhotoRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.FirestorePhotoStore
@@ -33,6 +37,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoPreparer
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
@@ -48,8 +53,39 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
 
     val journalPhotoStorage = JournalPhotoStorage(context)
 
+    val journalIdentity = JournalIdentity()
+
+    val journalSyncScheduler = JournalSyncScheduler(context)
+
+    val journalSyncCoordinator = JournalSyncCoordinator(
+        dao = journalDatabase.journalDraftDao(),
+        service = service,
+        identity = journalIdentity,
+    )
+
     val journalRepository: JournalRepository =
-        LocalJournalRepository(journalDatabase.journalDraftDao())
+        LocalJournalRepository(
+            journalDatabase.journalDraftDao(),
+            onDraftChanged = { ownerId ->
+                if (journalIdentity.isCurrentOwner(ownerId)) {
+                    journalSyncScheduler.requestSync(ownerId)
+                }
+            },
+        )
+
+    val journalCaptureStoring = JournalCaptureStoring(
+        repository = journalRepository,
+        photoStorage = journalPhotoStorage,
+        scope = appScope,
+        ownerProvider = {
+            val fireBaseOwner = journalIdentity.currentOwnerId()
+            val activeUser = EhkoCache.activeUser
+
+            fireBaseOwner?. takeIf {
+                activeUser.isSignedIn && activeUser.userId == it
+            }
+        }
+    )
 
     val settingsRepository: SettingsRepository = SharedPrefsSettingsRepository(context)
 
@@ -115,5 +151,32 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
     private companion object{
         const val TEST_USER_ID = "test-user"
     }
+    private var previousJournalOwner: String? = null
 
+    private val journalAuthListener =
+        FirebaseAuth.AuthStateListener { auth ->
+            val ownerId = auth.currentUser?.uid
+            val previous = previousJournalOwner
+
+            if (previous != null && previous != ownerId) {
+                journalSyncScheduler.cancel(previous)
+            }
+
+            previousJournalOwner = ownerId
+
+            if (ownerId != null) {
+                journalSyncScheduler.ensurePeriodicSync(ownerId)
+                journalSyncScheduler.requestSync(ownerId)
+            }
+        }
+
+    private var journalSyncStarted = false
+
+    fun startJournalSync() {
+        if (journalSyncStarted) return
+
+        journalSyncStarted = true
+        FirebaseAuth.getInstance()
+            .addAuthStateListener(journalAuthListener)
+    }
 }

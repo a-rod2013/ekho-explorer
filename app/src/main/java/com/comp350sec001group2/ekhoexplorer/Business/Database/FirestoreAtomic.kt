@@ -33,6 +33,11 @@ class TransactionScope internal constructor(
     fun delete(ref: DocumentReference){
         tx.delete(ref)
     }
+
+    fun read(
+        ref: DocumentReference,
+    ): com.google.firebase.firestore.DocumentSnapshot =
+        tx.get(ref)
 }
 
 abstract class FirestoreBatch : FirestoreOperation() {
