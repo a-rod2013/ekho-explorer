@@ -42,7 +42,7 @@ fun createObservationIcon(
 
         ObservationCategory.INSECT -> {
             backgroundColor = Color.rgb(180, 124, 50)
-            drawableId = R.drawable.ic_animal_marker
+            drawableId = R.drawable.ic_insect_marker
         }
 
         ObservationCategory.FUNGI -> {
