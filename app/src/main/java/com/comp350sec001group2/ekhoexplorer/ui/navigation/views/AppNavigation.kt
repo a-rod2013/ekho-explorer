@@ -112,11 +112,6 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                         onOpenNotifications = {
                             navController.navigate(Screen.Notifications.destination)
                         },
-                        onNewPost = {
-                            navController.navigate(Screen.NewPost.destination) {
-                                launchSingleTop = true
-                            }
-                        },
                         onSignOut = onSignOut,
                     )
                 }
