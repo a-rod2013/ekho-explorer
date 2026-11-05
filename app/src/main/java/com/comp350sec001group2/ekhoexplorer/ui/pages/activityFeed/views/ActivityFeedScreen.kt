@@ -5,39 +5,77 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.FeedHeader
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.components.PostCard
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.Vote
-import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.models.SamplePosts
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
+import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
+import com.comp350sec001group2.ekhoexplorer.ui.components.EmptyState
+import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
+import com.comp350sec001group2.ekhoexplorer.ui.components.LocalPhotoLoader
+import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedViewModel
+import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.feedViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 
 
 @Composable
 fun FeedScreen(
-    viewModel: FeedViewModel = viewModel(),
+    viewModel: FeedViewModel = viewModel(factory = feedViewModelFactory),
     onAccountClick: () -> Unit = {},
     onSearch: (String) -> Unit = {},
+    onOpenNotifications: () -> Unit = {},
+    onSignOut: (() -> Unit)? = null,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    FeedScreenContent(
-        uiState = uiState,
-        onQueryChange = viewModel::onQueryChange,
-        onSearch = onSearch,
-        onVote = viewModel::onVote,
-        onAccountClick = onAccountClick,
-    )
+    val unreadNotifications by viewModel.unreadNotifications.collectAsStateWithLifecycle()
+    var commentsPostId by rememberSaveable { mutableStateOf<String?>(null) }
+
+    CompositionLocalProvider(LocalPhotoLoader provides viewModel.photos) {
+        FeedScreenContent(
+            uiState = uiState,
+            onQueryChange = viewModel::onQueryChange,
+            onSearch = onSearch,
+            onVote = viewModel::onVote,
+            onAccountClick = onAccountClick,
+            onRefresh = viewModel::onRefresh,
+            onOpenComments = { postId -> commentsPostId = postId },
+            onDeletePost = viewModel::onDeletePost,
+            onHideUser = viewModel::onHideUser,
+            onBlockUser = viewModel::onBlockUser,
+            unreadNotifications = unreadNotifications,
+            onOpenNotifications = onOpenNotifications,
+            onSignOut = onSignOut,
+        )
+    }
+
+    commentsPostId?.let { postId ->
+        CommentsSheet(postId = postId, onDismiss = { commentsPostId = null })
+    }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FeedScreenContent(
     uiState: FeedUIState,
@@ -46,19 +84,84 @@ fun FeedScreenContent(
     onVote: (postId: String, vote: Vote) -> Unit,
     onAccountClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onRefresh: () -> Unit = {},
+    onOpenComments: (postId: String) -> Unit = {},
+    onDeletePost: (postId: String) -> Unit = {},
+    onHideUser: (userId: String) -> Unit = {},
+    onBlockUser: (userId: String) -> Unit = {},
+    unreadNotifications: Int = 0,
+    onOpenNotifications: () -> Unit = {},
+    onSignOut: (() -> Unit)? = null,
+    onNewPost: (() -> Unit)? = null,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(uiState.error) {
+        if (uiState.error != null) snackbarHostState.showSnackbar("Something went wrong. Please try again.")
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         containerColor = AppStyle.colors.background,
         // The header and bottom bar apply their own system-bar insets.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            if (onNewPost != null) {
+                FloatingActionButton(onClick = onNewPost) {
+                    Icon(Icons.Filled.Add, contentDescription = "New post")
+                }
+            }
+        },
 
         // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
         // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
+
+        // Same header with the search field left out (see above) and the notification bell added.
+        topBar = {
+            FeedHeader(
+                query = uiState.query,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch,
+                showSearch = false,
+                onBellClick = onOpenNotifications,
+                unreadNotifications = unreadNotifications,
+                onSignOut = onSignOut,
+                username = uiState.currentUserName,
+            )
+        },
     ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
-            items(items = uiState.posts, key = { it.id }) { post ->
-                PostCard(post = post, onVote = { vote -> onVote(post.id, vote) })
+        PullToRefreshBox(
+            isRefreshing = uiState.isRefreshing,
+            onRefresh = onRefresh,
+            modifier = Modifier.padding(padding).fillMaxSize(),
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                // Nothing to show
+                if (uiState.posts.isEmpty() && !uiState.isLoading && !uiState.isRefreshing) {
+                    item {
+                        val (title, message) = when {
+                            uiState.error != null ->
+                                "Couldn't load posts" to "Check your connection, then pull down to try again."
+                            uiState.hasHiddenUsers ->
+                                "No posts available" to
+                                    "Posts from accounts you hid or blocked are not shown. Pull down to refresh."
+                            else ->
+                                "No posts available" to "Check back soon. Pull down to refresh."
+                        }
+                        EmptyState(title = title, message = message, modifier = Modifier.fillParentMaxSize())
+                    }
+                }
+                items(items = uiState.posts, key = { it.id }) { post ->
+                    PostCard(
+                        post = post,
+                        onVote = { vote -> onVote(post.id, vote) },
+                        isOwner = post.userId.isNotEmpty() && post.userId == uiState.currentUserId,
+                        onOpenComments = { onOpenComments(post.id) },
+                        onDelete = { onDeletePost(post.id) },
+                        onHideUser = { onHideUser(post.userId) },
+                        onBlockUser = { onBlockUser(post.userId) },
+                    )
+                }
             }
         }
     }
@@ -70,6 +173,20 @@ private fun FeedScreenPreview() {
     EkhoExplorerTheme {
         FeedScreenContent(
             uiState = FeedUIState(posts = SamplePosts.all),
+            onQueryChange = {},
+            onSearch = {},
+            onVote = { _, _ -> },
+            onAccountClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+private fun FeedScreenEmptyPreview() {
+    EkhoExplorerTheme {
+        FeedScreenContent(
+            uiState = FeedUIState(isLoading = false, hasHiddenUsers = true),
             onQueryChange = {},
             onSearch = {},
             onVote = { _, _ -> },

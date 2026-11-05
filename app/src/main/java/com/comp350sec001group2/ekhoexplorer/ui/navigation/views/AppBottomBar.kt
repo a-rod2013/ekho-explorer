@@ -25,7 +25,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.layout.layoutId
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Book
+import androidx.compose.material.icons.filled.CameraAlt
 
 @Composable
 fun AppBottomBar(
@@ -37,14 +38,13 @@ fun AppBottomBar(
     val dimens = AppStyle.dimens
     val typography = AppStyle.type
 
-    // Add Screen.title from ui/navigation/models/Screen to add a navbar addition
+    // add navigation tabs using screens defined in Screen.kt
     val items = listOf(
-        Screen.Feed to Icons.Filled.Forum,
+        Screen.Journal to Icons.Filled.Book,
         Screen.Map to Icons.Filled.Explore,
-        Screen.Species to Icons.Filled.Search,
-
-        // COMMENTING OUT FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
-        // Screen.Profile to Icons.Filled.Person
+        Screen.Action to Icons.Filled.CameraAlt,
+        Screen.Feed to Icons.Filled.Forum,
+        //Screen.Profile to Icons.Filled.Person
     )
 
     Box {
@@ -57,9 +57,10 @@ fun AppBottomBar(
         ) {
             items.forEach { (screen, icon) ->
                 val selected = currentDestination == screen.destination
-
                 NavigationBarItem(
                     selected = selected,
+                    // disable profile until their navigation is ready
+                    //enabled = screen != Screen.Profile,
                     onClick = { onNavigate(screen) },
                     icon = {
                         Icon(
@@ -84,7 +85,6 @@ fun AppBottomBar(
                 )
             }
         }
-
         HorizontalDivider(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -92,6 +92,5 @@ fun AppBottomBar(
             thickness = 5.dp,
             color = colors.divider
         )
-
     }
 }

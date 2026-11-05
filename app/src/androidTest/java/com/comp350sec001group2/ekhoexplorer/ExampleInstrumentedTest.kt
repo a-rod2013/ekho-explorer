@@ -19,6 +19,9 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.COMP350_Group2_Thursday.ekhoexplorer", appContext.packageName)
+        assertEquals(
+            "com.comp350sec001group2.ekhoexplorer",
+            appContext.packageName
+        )
     }
 }

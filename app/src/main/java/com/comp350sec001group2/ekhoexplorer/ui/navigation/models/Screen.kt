@@ -4,27 +4,46 @@ sealed class Screen(
     val destination: String,
     val title: String
 ) {
-
-    // Add a new object here when wanting to create a new navbar addition
-    // be sure to include both a destination and title value
+    // add new navigation screens with a destination and title
+    // main navigation tabs
+    data object Journal : Screen(
+        destination = "journal",
+        title = "Journal"
+    )
     data object Map : Screen(
         destination = "map",
         title = "Map"
     )
-
+    data object Action : Screen(
+        destination = "action",
+        title = "Camera"
+    )
     data object Feed : Screen(
         destination = "feed",
         title = "Feed"
     )
-
-    data object Profile : Screen(
-        destination = "profile",
-        title = "Profile"
-    )
-
+//    data object Profile : Screen(
+//        destination = "profile",
+//        title = "Profile"
+//    )
+    // additional screens outside the main navigation bar
     data object Species : Screen(
         destination = "Species",
         title = "Species"
     )
+    data object Notifications : Screen(
+        destination = "notifications",
+        title = "Notifications"
+    )
 
+    // Feed post creation
+    data object NewPost : Screen(
+        destination = "newPost",
+        title = "New post"
+    )
+
+    data object Camera : Screen(
+        destination = "camera",
+        title = "Camera"
+    )
 }
