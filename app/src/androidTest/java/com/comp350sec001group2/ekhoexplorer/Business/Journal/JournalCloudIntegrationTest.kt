@@ -59,16 +59,19 @@ class JournalCloudIntegrationTest {
     }
 
     @After
-    fun tearDown() = runBlocking {
+    fun tearDown(): Unit = runBlocking {
+
+
         try {
             for (client in clients) {
-                try {
-                    withTimeoutOrNull(CLEANUP_TIMEOUT) {
-                        client.firestore.terminate().await()
-                    }
-                } finally {
-                    client.app.delete()
+                client.auth.signOut()
+
+                withTimeoutOrNull(CLEANUP_TIMEOUT) {
+                    client.firestore.terminate().await()
                 }
+
+                // Keep the named FirebaseApp alive for this test process.
+                // Auth emulator configuration may retain a reference to it.
             }
         } finally {
             clients.clear()
