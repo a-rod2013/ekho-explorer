@@ -17,6 +17,9 @@ import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
+import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.Date
 
 data class ProfileUiState(
     val displayName: String = "",
@@ -37,6 +40,9 @@ data class ProfileUiState(
 class ProfileViewModel(
     private val container: AppContainer
 ) : ViewModel() {
+
+    private val joinDateFormatter =
+        SimpleDateFormat("MMMM yyyy", Locale.getDefault())
 
     var uiState by mutableStateOf(ProfileUiState())
         private var loadedUserId: String? = null
@@ -76,8 +82,12 @@ class ProfileViewModel(
                             username = profile.username,
                             bio = profile.bio,
                             bioDraft = profile.bio,
+                            joinDate = profile.createdAt?.let { date ->
+                                joinDateFormatter.format(date)
+                            } ?: "",
                             isLoading = false,
                             errorMessage = null
+
                         )
                     }
                 } catch (e: CancellationException) {

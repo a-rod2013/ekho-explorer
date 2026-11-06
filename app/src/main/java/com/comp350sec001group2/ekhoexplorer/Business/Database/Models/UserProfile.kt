@@ -2,6 +2,7 @@ package com.comp350sec001group2.ekhoexplorer.Business.Database.Models
 
 import com.comp350sec001group2.ekhoexplorer.Business.Database.DocumentData
 import com.comp350sec001group2.ekhoexplorer.Business.Database.DocumentReader
+import java.util.Date
 
 /**
  * The public face of an account: users/{uid}.
@@ -10,6 +11,7 @@ data class UserProfile(
     val userId: String,
     val username: String,
     val bio: String = "",
+    val createdAt: Date? = null,
 )
 
 object UserProfileFields {
@@ -26,5 +28,6 @@ object UserProfileMapper : DocumentReader<UserProfile> {
         userId = doc.id,
         username = doc.string(UserProfileFields.USERNAME),
         bio = doc.stringOrNull(UserProfileFields.BIO) ?: "",
+        createdAt = doc.dateOrNull(UserProfileFields.CREATED_AT),
     )
 }
