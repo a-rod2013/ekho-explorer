@@ -40,3 +40,9 @@ secrets.properties
 # OS files
 .DS_Store
 Thumbs.db
+
+# Firebase-generated files
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*

@@ -12,6 +12,7 @@ maplibre = "13.5.3"
 navigationCompose = "2.10.2"
 room = "2.8.5"
 ksp = "2.3.10"
+workManager = "2.10.3"
 
 
 [libraries]
@@ -34,6 +35,8 @@ maplibre-android = { group = "org.maplibre.gl", name = "android-sdk", version.re
 androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workManager" }
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
