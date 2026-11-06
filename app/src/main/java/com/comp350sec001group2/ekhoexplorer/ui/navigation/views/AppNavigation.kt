@@ -28,6 +28,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.Notific
 import com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.views.NewPostScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
 
 
 @Composable
@@ -93,7 +94,7 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
 
             // main application screens
             navigation(
-                startDestination = Screen.Map.destination,
+                startDestination = "profile",
                 route = MAIN_ROUTE
             ) {
                 composable(Screen.Journal.destination) {
@@ -144,6 +145,9 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
 
 
                 // profile is temporarily disabled pending a crash fix
+                composable("profile") {
+                    ProfileScreen()
+                }
 
                 composable(Screen.Species.destination) {
                     SpeciesSearchScreen(

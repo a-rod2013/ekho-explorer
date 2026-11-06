@@ -37,6 +37,8 @@ import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoPreparer
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserProfileQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -47,6 +49,10 @@ import kotlinx.coroutines.launch
 
 class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
     private val service = FirestoreService(Firebase.firestore)
+    suspend fun getUserProfile(userId: String): UserProfile? {
+        return service.execute(GetUserProfileQuery(userId))
+    }
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val journalDatabase = JournalDatabase.create(context)

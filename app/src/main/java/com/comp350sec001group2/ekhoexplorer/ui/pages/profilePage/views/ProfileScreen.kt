@@ -36,10 +36,13 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxWidth
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.profileViewModelFactory
 
 @Composable
 fun ProfileScreen(
-    viewModel: ProfileViewModel = viewModel()
+    viewModel: ProfileViewModel = viewModel(
+        factory = profileViewModelFactory
+    )
 ) {
     val uiState = viewModel.uiState
     var selectedPost by remember { mutableStateOf<Post?>(null) }
@@ -134,12 +137,14 @@ fun ProfileScreenContent(
                             color = AppStyle.colors.textSecondary
                         )
 
-                        Text(
-                            text = "Explorer since ${uiState.joinDate}",
-                            modifier = Modifier.padding(top = AppStyle.dimens.sm),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = AppStyle.colors.textSecondary
-                        )
+                        if (uiState.joinDate.isNotBlank()) {
+                            Text(
+                                text = "Explorer since ${uiState.joinDate}",
+                                modifier = Modifier.padding(top = AppStyle.dimens.sm),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AppStyle.colors.textSecondary
+                            )
+                        }
                     }
                 }
             }
