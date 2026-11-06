@@ -9,6 +9,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.DocumentReader
 data class UserProfile(
     val userId: String,
     val username: String,
+    val bio: String = "",
 )
 
 object UserProfileFields {
@@ -16,11 +17,14 @@ object UserProfileFields {
     const val USERNAME = "username"
     const val USERNAME_LOWER = "usernameLower"
     const val CREATED_AT = "createdAt"
+
+    const val BIO = "bio"
 }
 
 object UserProfileMapper : DocumentReader<UserProfile> {
     override fun read(doc: DocumentData) = UserProfile(
         userId = doc.id,
         username = doc.string(UserProfileFields.USERNAME),
+        bio = doc.stringOrNull(UserProfileFields.BIO) ?: "",
     )
 }

@@ -185,6 +185,7 @@ fun ProfileScreenContent(
                             BasicTextField(
                                 value = uiState.bioDraft,
                                 onValueChange = onBioDraftChange,
+                                enabled = !uiState.isSavingBio,
                                 modifier = Modifier.fillMaxWidth(),
                                 textStyle = MaterialTheme.typography.bodyMedium.copy(
                                     color = AppStyle.colors.textPrimary
@@ -201,22 +202,45 @@ fun ProfileScreenContent(
                                 }
                             )
 
+                            uiState.errorMessage?.let { message ->
+                                Text(
+                                    text = message,
+                                    color = MaterialTheme.colorScheme.error,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    modifier = Modifier.padding(top = 8.dp)
+                                )
+                            }
+
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.End
                             ) {
-                                TextButton(onClick = onCancelBio) {
+                                TextButton(
+                                    onClick = onCancelBio,
+                                    enabled = !uiState.isSavingBio
+                                ) {
                                     Text("Cancel")
                                 }
 
-                                TextButton(onClick = onSaveBio) {
-                                    Text("Save Edits")
+                                TextButton(
+                                    onClick = onSaveBio,
+                                    enabled = !uiState.isSavingBio && uiState.bioDraft.length <= 160
+                                ) {
+                                    Text(
+                                        if (uiState.isSavingBio) "Saving..." else "Save Edits"
+                                    )
                                 }
                             }
                         }
                     } else {
+                        // replacing the code right here possibly this is a marker for myself to see
                         Text(
-                            text = uiState.bio,
+                            text = when {
+                                uiState.isLoading -> "Loading profile..."
+                                uiState.errorMessage != null -> uiState.errorMessage!!
+                                uiState.bio.isBlank() -> "No bio yet. Tap the edit icon to add one."
+                                else -> uiState.bio
+                            },
                             style = MaterialTheme.typography.bodyMedium,
                             color = AppStyle.colors.textPrimary,
                             modifier = Modifier

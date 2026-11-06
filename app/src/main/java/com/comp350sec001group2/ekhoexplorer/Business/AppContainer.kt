@@ -2,6 +2,7 @@ package com.comp350sec001group2.ekhoexplorer.Business
 
 import android.content.Context
 import android.util.Log
+
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthBackend
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthRepository
@@ -39,6 +40,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserProfileQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserProfile
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.UpdateUserBioCommand
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -51,6 +53,10 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
     private val service = FirestoreService(Firebase.firestore)
     suspend fun getUserProfile(userId: String): UserProfile? {
         return service.execute(GetUserProfileQuery(userId))
+    }
+
+    suspend fun updateUserBio(userId: String, bio: String) {
+        service.execute(UpdateUserBioCommand(userId, bio))
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

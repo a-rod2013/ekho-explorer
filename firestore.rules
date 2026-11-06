@@ -42,7 +42,13 @@ service cloud.firestore {
       allow create: if isUser(userId)
         && validProfile(request.resource.data);
 
-      allow update, delete: if false;
+      allow update: if isUser(userId)
+        && request.resource.data.diff(resource.data)
+            .affectedKeys().hasOnly(["bio"])
+        && request.resource.data.bio is string
+        && request.resource.data.bio.size() <= 160;
+
+      allow delete: if false;
 
       // Notifications
       match /notifications/{notificationId} {

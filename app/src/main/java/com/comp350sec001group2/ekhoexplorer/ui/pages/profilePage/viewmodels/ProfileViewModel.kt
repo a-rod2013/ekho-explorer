@@ -30,6 +30,7 @@ data class ProfileUiState(
     val species: Int = 0,
     val posts: List<Post> = emptyList(),
     val isLoading: Boolean = true,
+    val isSavingBio: Boolean = false,
     val errorMessage: String? = null
 )
 
@@ -38,11 +39,13 @@ class ProfileViewModel(
 ) : ViewModel() {
 
     var uiState by mutableStateOf(ProfileUiState())
+        private var loadedUserId: String? = null
         private set
 
     init {
         viewModelScope.launch {
             EhkoCache.activeUserFlow.collectLatest { activeUser ->
+                loadedUserId = null
 
                 if (!activeUser.isSignedIn) {
                     uiState = ProfileUiState(isLoading = false)
@@ -66,9 +69,13 @@ class ProfileViewModel(
                             errorMessage = "User profile not found."
                         )
                     } else {
+                        loadedUserId = activeUser.userId
+
                         uiState = uiState.copy(
                             displayName = profile.username,
                             username = profile.username,
+                            bio = profile.bio,
+                            bioDraft = profile.bio,
                             isLoading = false,
                             errorMessage = null
                         )
@@ -91,27 +98,96 @@ class ProfileViewModel(
     }
 
     fun saveBio() {
+        if (uiState.isSavingBio || uiState.isLoading || !uiState.isEditingBio) {
+            return
+        }
+
+        val userId = loadedUserId ?: return
+        val activeUser = EhkoCache.activeUser
+
+        if (!activeUser.isSignedIn || activeUser.userId != userId) {
+            return
+        }
+
+        val newBio = uiState.bioDraft
+
+        if (newBio.length > 160) {
+            uiState = uiState.copy(
+                errorMessage = "Bio must be 160 characters or fewer."
+            )
+            return
+        }
+
         uiState = uiState.copy(
-            bio = uiState.bioDraft,
-            isEditingBio = false
+            isSavingBio = true,
+            errorMessage = null
         )
+
+        viewModelScope.launch {
+            try {
+                container.updateUserBio(userId, newBio)
+
+                if (loadedUserId == userId && EhkoCache.activeUser.userId == userId) {
+                    uiState = uiState.copy(
+                        bio = newBio,
+                        bioDraft = newBio,
+                        isEditingBio = false,
+                        isSavingBio = false,
+                        errorMessage = null
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("ProfileViewModel", "Could not save bio", e)
+
+                if (loadedUserId == userId && EhkoCache.activeUser.userId == userId) {
+                    uiState = uiState.copy(
+                        isSavingBio = false,
+                        errorMessage = "Could not save bio. Please try again."
+                    )
+                }
+            }
+        }
     }
 
     fun startEditingBio() {
+
+        Log.d(
+            "ProfileViewModel",
+            "Edit clicker: isLoading =${uiState.isLoading}, loadedUserId=${loadedUserId != null}"
+        )
+
+        if (uiState.isLoading || loadedUserId == null) return
+
         uiState = uiState.copy(
             isEditingBio = true,
-            bioDraft = uiState.bio
+            bioDraft = uiState.bio,
+            errorMessage = null
+        )
+
+        Log.d(
+            "ProfileViewModel",
+            "Editing started: ${uiState.isEditingBio}"
         )
     }
 
     fun updateBioDraft(newBio: String) {
-        uiState = uiState.copy(bioDraft = newBio)
+        if (uiState.isSavingBio) return
+
+        uiState = uiState.copy(
+            bioDraft = newBio,
+            errorMessage = null
+        )
     }
 
     fun cancelEditingBio() {
+        if (uiState.isSavingBio) return
+
         uiState = uiState.copy(
             isEditingBio = false,
-            bioDraft = uiState.bio
+            bioDraft = uiState.bio,
+            errorMessage = null
         )
     }
 }
