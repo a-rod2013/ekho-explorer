@@ -44,10 +44,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import com.comp350sec001group2.ekhoexplorer.ui.components.LogoPlaceholder
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.comp350sec001group2.ekhoexplorer.R
+import androidx.compose.ui.layout.ContentScale
 
 @Composable
 fun AuthLayout(
@@ -73,8 +76,15 @@ fun AuthLayout(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(d.md),
         ) {
-            Spacer(Modifier.height(d.xl))
-            LogoPlaceholder(Modifier.size(72.dp))
+            Spacer(Modifier.height(d.md))
+            Image(
+                painter = painterResource(id = R.drawable.ekho_logo),
+                contentDescription = "Ekho Explorer logo",
+                modifier = Modifier.size(210.dp),
+                contentScale = ContentScale.Fit
+            )
+
+            Spacer(Modifier.height(d.xs))
             Text(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,

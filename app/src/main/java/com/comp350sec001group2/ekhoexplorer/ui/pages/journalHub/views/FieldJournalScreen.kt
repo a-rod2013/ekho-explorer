@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CenterFocusWeak
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.viewmodels.JournalViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.viewmodels.journalViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import androidx.compose.foundation.layout.statusBarsPadding
 
 @Composable
 fun FieldJournalScreen(
@@ -37,7 +38,8 @@ fun FieldJournalScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(dimens.md),
+            .statusBarsPadding()
+            .padding(horizontal = dimens.lg, vertical = dimens.sm),
         verticalArrangement = Arrangement.spacedBy(dimens.md)
     ) {
         Row(
@@ -55,7 +57,7 @@ fun FieldJournalScreen(
                 onClick = onOpenSpecies
             ) {
                 Icon(
-                    imageVector = Icons.Filled.CenterFocusWeak,
+                    imageVector = Icons.Filled.Search,
                     contentDescription = "Search species",
                     tint = colors.textPrimary
                 )
