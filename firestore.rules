@@ -50,6 +50,39 @@ service cloud.firestore {
 
       allow delete: if false;
 
+      // Profile Avatars
+      match /avatar/{avatarId} {
+
+        // Signed-in user can view an avatar
+        allow get: if signedIn()
+            && avatarId == 'current';
+
+        // Only the account owner can upload or replace their avatar
+        allow create, update: if isUser(userId)
+            && avatarId == 'current'
+            && request.resource.data.keys().hasAll([
+                'data',
+                'width',
+                'height'
+            ])
+            && request.resource.data.keys().hasOnly([
+                'data',
+                'width',
+                'height'
+            ])
+            && request.resource.data.data is bytes
+            && request.resource.data.data.size() > 0
+            && request.resource.data.data.size() <= 100000
+            && request.resource.data.width is int
+            && request.resource.data.width > 0
+            && request.resource.data.width <= 2048
+            && request.resource.data.height is int
+            && request.resource.data.height > 0
+            && request.resource.data.height <= 2048;
+
+            allow delete: if false;
+      }
+
       // Notifications
       match /notifications/{notificationId} {
         allow read: if isUser(userId);

@@ -20,6 +20,13 @@ import kotlin.coroutines.cancellation.CancellationException
 import java.util.Locale
 import java.text.SimpleDateFormat
 import java.util.Date
+import android.content.ContentResolver
+import android.net.Uri
+import java.io.IOException
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class ProfileUiState(
     val displayName: String = "",
@@ -34,7 +41,11 @@ data class ProfileUiState(
     val posts: List<Post> = emptyList(),
     val isLoading: Boolean = true,
     val isSavingBio: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val isUploadingAvatar: Boolean = false,
+    val avatarErrorMessage: String? = null,
+    val avatarUploadMessage: String? = null,
+    val avatarBitmap: Bitmap? = null,
 )
 
 class ProfileViewModel(
@@ -47,6 +58,104 @@ class ProfileViewModel(
     var uiState by mutableStateOf(ProfileUiState())
         private var loadedUserId: String? = null
         private set
+
+    fun uploadAvatar(uri: Uri, contentResolver: ContentResolver) {
+        if (uiState.isUploadingAvatar || uiState.isLoading) return
+
+        val userId = loadedUserId ?: return
+        val activeUser = EhkoCache.activeUser
+
+        if (!activeUser.isSignedIn || activeUser.userId != userId) {
+            return
+        }
+
+        uiState = uiState.copy(
+            isUploadingAvatar = true,
+            avatarErrorMessage = null,
+            avatarUploadMessage = null
+        )
+
+        viewModelScope.launch {
+            try {
+                // Read and compress the image
+                val photos = container.photoPreparer.prepare(
+                    listOf {
+                        contentResolver.openInputStream(uri)
+                            ?: throw IOException("Could not open selected image")
+                    }
+                )
+
+                val photo = photos.single()
+
+                container.updateUserAvatar(userId, photo)
+
+                val savedBitmap = withContext(Dispatchers.Default) {
+                    BitmapFactory.decodeByteArray(
+                        photo.bytes,
+                        0,
+                        photo.bytes.size
+                    )
+                }
+
+                if (loadedUserId == userId &&
+                    EhkoCache.activeUser.isSignedIn &&
+                    EhkoCache.activeUser.userId == userId
+                ) {
+                    uiState = uiState.copy(
+                        avatarBitmap = savedBitmap,
+                        isUploadingAvatar = false,
+                        avatarUploadMessage = "Profile picture saved!",
+                        avatarErrorMessage = null
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("ProfileViewModel", "Could not upload avatar", e)
+
+                if (loadedUserId == userId &&
+                    EhkoCache.activeUser.isSignedIn &&
+                    EhkoCache.activeUser.userId == userId
+                ) {
+                    uiState = uiState.copy(
+                        isUploadingAvatar = false,
+                        avatarErrorMessage =
+                            "Could not save profile picture. Please try again."
+                    )
+                }
+            }
+        }
+
+    }
+
+    private suspend fun loadAvatar(userId: String) {
+        try {
+            val avatar = container.getUserAvatar(userId)
+
+            val bitmap = avatar?. let {
+                withContext(Dispatchers.Default) {
+                    BitmapFactory.decodeByteArray(
+                        it.bytes,
+                        0,
+                        it.bytes.size
+                    )
+                }
+            }
+
+            if (loadedUserId == userId &&
+                EhkoCache.activeUser.isSignedIn &&
+                EhkoCache.activeUser.userId == userId
+            ) {
+                uiState = uiState.copy(
+                    avatarBitmap = bitmap
+                )
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("ProfileViewModel", "Could not load avatar", e)
+        }
+    }
 
     init {
         viewModelScope.launch {
@@ -89,6 +198,7 @@ class ProfileViewModel(
                             errorMessage = null
 
                         )
+                        loadAvatar(activeUser.userId)
                     }
                 } catch (e: CancellationException) {
                     throw e
@@ -200,6 +310,14 @@ class ProfileViewModel(
             errorMessage = null
         )
     }
+
+    fun clearAvatarMessage() {
+        uiState = uiState.copy(
+            avatarUploadMessage = null,
+            avatarErrorMessage = null
+        )
+    }
+
 }
 
 val profileViewModelFactory = viewModelFactory {

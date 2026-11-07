@@ -3,6 +3,10 @@ package com.comp350sec001group2.ekhoexplorer.Business
 import android.content.Context
 import android.util.Log
 
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.UpdateUserAvatarCommand
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserAvatarQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserAvatar
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.EncodedPhoto
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthBackend
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthRepository
@@ -57,6 +61,14 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
 
     suspend fun updateUserBio(userId: String, bio: String) {
         service.execute(UpdateUserBioCommand(userId, bio))
+    }
+
+    suspend fun getUserAvatar(userId: String): UserAvatar? {
+        return service.execute(GetUserAvatarQuery(userId))
+    }
+
+    suspend fun updateUserAvatar(userId: String, photo: EncodedPhoto) {
+        service.execute(UpdateUserAvatarCommand(userId, photo))
     }
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

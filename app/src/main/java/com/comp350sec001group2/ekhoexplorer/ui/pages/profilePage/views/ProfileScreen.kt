@@ -1,6 +1,11 @@
 
 package com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views
 
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.foundation.background
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -35,8 +40,15 @@ import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import androidx.compose.ui.window.Dialog
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.profileViewModelFactory
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.asImageBitmap
 
 @Composable
 fun ProfileScreen(
@@ -45,10 +57,36 @@ fun ProfileScreen(
     )
 ) {
     val uiState = viewModel.uiState
+    LaunchedEffect(
+        uiState.avatarUploadMessage,
+        uiState.avatarErrorMessage
+    ) {
+        if (uiState.avatarUploadMessage != null ||
+            uiState.avatarErrorMessage != null
+            ) {
+                delay(2000L)
+                viewModel.clearAvatarMessage()
+        }
+    }
+
     var selectedPost by remember { mutableStateOf<Post?>(null) }
+
+    val context = LocalContext.current
+    val avatarPicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.uploadAvatar(uri, context.contentResolver)
+        }
+    }
 
     ProfileScreenContent(
         uiState = uiState,
+        onAvatarClick = {
+            if (!uiState.isUploadingAvatar && !uiState.isLoading) {
+                avatarPicker.launch("image/*")
+            }
+        },
         onEditBio = viewModel::startEditingBio,
         onBioDraftChange = viewModel::updateBioDraft,
         onSaveBio = viewModel::saveBio,
@@ -87,6 +125,8 @@ fun ProfileScreen(
 @Composable
 fun ProfileScreenContent(
     uiState: ProfileUiState,
+    selectedAvatarUri: Uri? = null,
+    onAvatarClick: () -> Unit = {},
     onPostClick: (Post) -> Unit,
     onEditBio: () -> Unit,
     onBioDraftChange: (String) -> Unit,
@@ -114,13 +154,33 @@ fun ProfileScreenContent(
                         .padding(AppStyle.dimens.lg),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AsyncImage(
-                        model = uiState.avatarUrl,
-                        contentDescription = "Profile picture",
-                        modifier = Modifier.size(80.dp),
-                        contentScale = ContentScale.Crop
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                            .clickable(
+                                enabled = !uiState.isUploadingAvatar,
+                                onClick = onAvatarClick),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        val avatarBitmap = uiState.avatarBitmap
 
+                        if (avatarBitmap != null) {
+                            Image(
+                                bitmap = avatarBitmap.asImageBitmap(),
+                                contentDescription = "Profile picture",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = "Default profile picture",
+                                modifier = Modifier.fillMaxSize(),
+                                tint = AppStyle.colors.textSecondary
+                            )
+                        }
+                    }
                     Column(
                         modifier = Modifier.padding(start = AppStyle.dimens.md),
                         verticalArrangement = Arrangement.Center
@@ -145,6 +205,31 @@ fun ProfileScreenContent(
                                 color = AppStyle.colors.textSecondary
                             )
                         }
+
+                        if (uiState.isUploadingAvatar) {
+                            Text(
+                                text = "Uploading picture...",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AppStyle.colors.textSecondary
+                            )
+                        }
+
+                        uiState.avatarErrorMessage?.let { message ->
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+
+                        uiState.avatarUploadMessage?.let { message ->
+                            Text(
+                                text = message,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = AppStyle.colors.textSecondary
+                            )
+                        }
+
                     }
                 }
             }
