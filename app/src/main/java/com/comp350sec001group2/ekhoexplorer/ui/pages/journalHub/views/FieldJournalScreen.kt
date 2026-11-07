@@ -2,7 +2,6 @@ package com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,11 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CenterFocusWeak
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,27 +34,6 @@ fun FieldJournalScreen(
             .padding(dimens.md),
         verticalArrangement = Arrangement.spacedBy(dimens.md)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Field Journal",
-                style = MaterialTheme.typography.headlineSmall,
-                color = colors.textPrimary
-            )
-
-            IconButton(
-                onClick = onOpenSpecies
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.CenterFocusWeak,
-                    contentDescription = "Search species",
-                    tint = colors.textPrimary
-                )
-            }
-        }
         if (entries.isEmpty()) {
             Box(
                 modifier = Modifier

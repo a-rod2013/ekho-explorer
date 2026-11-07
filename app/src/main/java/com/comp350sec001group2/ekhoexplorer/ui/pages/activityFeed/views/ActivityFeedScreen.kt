@@ -30,7 +30,6 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
 import com.comp350sec001group2.ekhoexplorer.ui.components.EmptyState
-import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
 import com.comp350sec001group2.ekhoexplorer.ui.components.LocalPhotoLoader
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
@@ -38,7 +37,6 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.Fee
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.feedViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
-
 
 @Composable
 fun FeedScreen(
@@ -111,23 +109,6 @@ fun FeedScreenContent(
                     Icon(Icons.Filled.Add, contentDescription = "New post")
                 }
             }
-        },
-
-        // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
-        // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
-
-        // Same header with the search field left out (see above) and the notification bell added.
-        topBar = {
-            FeedHeader(
-                query = uiState.query,
-                onQueryChange = onQueryChange,
-                onSearch = onSearch,
-                showSearch = false,
-                onBellClick = onOpenNotifications,
-                unreadNotifications = unreadNotifications,
-                onSignOut = onSignOut,
-                username = uiState.currentUserName,
-            )
         },
     ) { padding ->
         PullToRefreshBox(
