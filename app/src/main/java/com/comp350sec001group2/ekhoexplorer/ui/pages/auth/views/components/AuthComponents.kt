@@ -69,7 +69,7 @@ fun AuthLayout(
     ) {
         Column(
             modifier = Modifier
-                .widthIn(max = 420.dp)
+                .widthIn(max = d.authMaxWidth)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = d.xl, vertical = d.xl),
@@ -80,7 +80,7 @@ fun AuthLayout(
             Image(
                 painter = painterResource(id = R.drawable.ekho_logo),
                 contentDescription = "Ekho Explorer logo",
-                modifier = Modifier.size(210.dp),
+                modifier = Modifier.size(AppStyle.dimens.authLogo),
                 contentScale = ContentScale.Fit
             )
 
