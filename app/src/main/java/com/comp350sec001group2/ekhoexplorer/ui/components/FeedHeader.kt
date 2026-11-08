@@ -1,6 +1,5 @@
 package com.comp350sec001group2.ekhoexplorer.ui.components
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,8 +28,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.input.ImeAction
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
-
-
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun FeedHeader(
@@ -56,7 +54,11 @@ fun FeedHeader(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(d.md),
     ) {
-        LogoPlaceholder()
+        Text(
+            text = "Activity Feed",
+            style = MaterialTheme.typography.headlineSmall,
+            color = AppStyle.colors.textPrimary
+        )
         if (showSearch) {
             SearchField(
                 query = query,
@@ -73,19 +75,6 @@ fun FeedHeader(
         if (onSignOut != null) {
             AccountMenu(username = username, onSignOut = onSignOut)
         }
-    }
-}
-
-@Composable
-fun LogoPlaceholder(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(AppStyle.dimens.logo)
-            .clip(RoundedCornerShape(AppStyle.dimens.radiusSm))
-            .background(AppStyle.colors.accent),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(text = "L", style = AppStyle.type.logo, color = AppStyle.colors.onAccent)
     }
 }
 
