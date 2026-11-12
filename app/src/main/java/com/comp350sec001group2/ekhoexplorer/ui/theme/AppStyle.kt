@@ -89,6 +89,8 @@ data class AppDimens(
     // Specific Components
     val avatar: Dp = 40.dp,
     val logo: Dp = 40.dp,
+    val authLogo: Dp = 210.dp,
+    val authMaxWidth: Dp = 420.dp,
     val searchHeight: Dp = 44.dp,
     val icon: Dp = 22.dp,
     val touchTarget: Dp = 48.dp,
