@@ -2,22 +2,33 @@ package com.comp350sec001group2.ekhoexplorer.ui.species
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,136 +36,110 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.comp350sec001group2.ekhoexplorer.Business.Species.SpeciesApiResult
+import com.comp350sec001group2.ekhoexplorer.Business.Species.SpeciesApiService
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.IconButton
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import androidx.compose.runtime.saveable.rememberSaveable
 
-data class Species(
-    val name: String,
-    val scientificName: String,
-    val category: String,
-    val imageUrl: String
-)
-val sampleSpecies = listOf(
-    Species(
-        name = "California Poppy",
-        scientificName = "Eschscholzia californica",
-        category = "Plants",
-        imageUrl = "https://picsum.photos/id/976/800/800"
-    ),
-    Species(
-        name = "California Sagebrush",
-        scientificName = "Artemisia californica",
-        category = "Plants",
-        imageUrl = "https://picsum.photos/id/33/800/800"
-    ),
-    Species(
-        name = "Black Sage",
-        scientificName = "Salvia mellifera",
-        category = "Plants",
-        imageUrl = "https://picsum.photos/id/958/800/800"
-    ),
-    Species(
-        name = "Western Bluebird",
-        scientificName = "Sialia mexicana",
-        category = "Animals",
-        imageUrl = "https://picsum.photos/id/258/800/800"
-    ),
-    Species(
-        name = "Coyote",
-        scientificName = "Canis latrans",
-        category = "Animals",
-        imageUrl = "https://picsum.photos/id/718/800/800"
-    ),
-    Species(
-        name = "Monarch Butterfly",
-        scientificName = "Danaus plexippus",
-        category = "Insects",
-        imageUrl = "https://picsum.photos/id/82/800/800"
-    ),
-    Species(
-        name = "California Mantis",
-        scientificName = "Stagmomantis wheelerii",
-        category = "Insects",
-        imageUrl = "https://picsum.photos/id/18/800/800"
-    ),
-    Species(
-        name = "Fly Agaric",
-        scientificName = "Amanita muscaria",
-        category = "Fungi",
-        imageUrl = "https://picsum.photos/id/977/800/800"
-    ),
-    Species(
-        name = "Split Gill",
-        scientificName = "Schizophyllum commune",
-        category = "Fungi",
-        imageUrl = "https://picsum.photos/id/803/800/800"
-    ),
-    Species(
-        name = "Rounded Earthstar",
-        scientificName = "Geastrum saccatum",
-        category = "Fungi",
-        imageUrl = "https://picsum.photos/id/118/800/800"
-    )
-)
+private fun matchesCategory(
+    species: SpeciesApiResult,
+    category: String
+): Boolean {
+    val taxon = species.category
+
+    return when (category) {
+        "Plants" -> taxon == "Plantae"
+        "Insects" -> taxon == "Insecta"
+        "Fungi" -> taxon == "Fungi"
+        "Animals" -> taxon in setOf(
+            "Animalia",
+            "Mammalia",
+            "Aves",
+            "Reptilia",
+            "Amphibia",
+            "Actinopterygii",
+            "Mollusca",
+            "Arachnida"
+        )
+        else -> true
+    }
+}
 
 @Composable
 fun SpeciesSearchScreen(
-    onBack: () -> Unit = {}
+    onBack: () -> Unit = {},
+    showSearchField: Boolean = false,
+    onSpeciesClick: (Int) -> Unit = {}
 ) {
-    var searchText by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf("All") }
-    val filteredSpecies = sampleSpecies.filter { species ->
-        (selectedCategory == "All" || species.category == selectedCategory) &&
-            (
-                searchText.isBlank() ||
-                    species.name.contains(searchText, ignoreCase = true) ||
-                    species.scientificName.contains(searchText, ignoreCase = true)
-                )
+    var searchText by rememberSaveable { mutableStateOf("") }
+    var selectedCategory by rememberSaveable { mutableStateOf("All") }
+
+    var speciesResults by remember {
+        mutableStateOf<List<SpeciesApiResult>>(emptyList())
     }
+
+    var isLoading by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    val apiService = remember { SpeciesApiService() }
+
+    LaunchedEffect(searchText, selectedCategory) {
+        speciesResults = emptyList()
+        errorMessage = null
+        isLoading = false
+
+        if (searchText.isBlank() && selectedCategory == "All") {
+            return@LaunchedEffect
+        }
+
+        delay(700)
+        isLoading = true
+
+        try {
+            speciesResults = if (searchText.isBlank()) {
+                apiService.browseSpecies(selectedCategory)
+            } else {
+                apiService.searchSpecies(searchText)
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            errorMessage = "Unable to load species. Please try again."
+        } finally {
+            isLoading = false
+        }
+    }
+
+    val filteredSpecies = speciesResults.filter {
+        matchesCategory(it, selectedCategory)
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = AppStyle.colors.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        topBar = {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(AppStyle.dimens.lg),
-                verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.md)
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = AppStyle.colors.textPrimary
-                        )
-                    }
 
-                    Text(
-                        text = "Species Search",
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = AppStyle.colors.textPrimary
-                    )
-                }
+        topBar = {
+            if (showSearchField) {
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            horizontal = AppStyle.dimens.md,
+                            vertical = AppStyle.dimens.sm
+                        ),
+                    placeholder = {
+                        Text("Search by common or scientific name")
+                    },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Filled.Search,
@@ -162,39 +147,45 @@ fun SpeciesSearchScreen(
                         )
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(50)
+                    shape = MaterialTheme.shapes.extraLarge
                 )
             }
         }
     ) { padding ->
-        LazyColumn(
+
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
             modifier = Modifier
                 .padding(padding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                AppStyle.dimens.md
+            ),
+            horizontalArrangement = Arrangement.spacedBy(AppStyle.dimens.md),
+            verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.md)
         ) {
-            item {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(AppStyle.dimens.lg)
-                ) {
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Column {
                     Text(
                         text = "Explore Categories",
+                        style = MaterialTheme.typography.titleMedium,
                         color = AppStyle.colors.textPrimary
                     )
+
                     Spacer(
-                        modifier = Modifier.height(AppStyle.dimens.md)
+                        modifier = Modifier.height(AppStyle.dimens.sm)
                     )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         listOf("Plants", "Animals", "Insects", "Fungi")
                             .forEach { category ->
                                 FilterChip(
                                     selected = selectedCategory == category,
                                     onClick = {
-                                        // Tapping again deselects the category
                                         selectedCategory =
                                             if (selectedCategory == category) {
                                                 "All"
@@ -208,69 +199,127 @@ fun SpeciesSearchScreen(
                                 )
                             }
                     }
+
                     Spacer(
-                        modifier = Modifier.height(AppStyle.dimens.lg)
+                        modifier = Modifier.height(AppStyle.dimens.md)
                     )
+
                     Text(
-                        text = "Sample Species",
+                        text = "Species Results",
+                        style = MaterialTheme.typography.titleMedium,
                         color = AppStyle.colors.textPrimary
                     )
                 }
             }
-            items(
-                items = filteredSpecies,
-                key = { species -> species.name }
-            ) { species ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(AppStyle.colors.background)
-                ) {
 
-                    Row(
+            if (isLoading) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(
-                                horizontal = AppStyle.dimens.lg,
-                                vertical = AppStyle.dimens.sm
-                            ),
-                        verticalAlignment = Alignment.CenterVertically
+                            .padding(AppStyle.dimens.lg),
+                        contentAlignment = Alignment.Center
                     ) {
-                        AsyncImage(
-                            model = species.imageUrl,
-                            contentDescription = species.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(80.dp)
-                                .background(AppStyle.colors.surface)
-                        )
-                        Column(
-                            modifier = Modifier.padding(
-                                start = AppStyle.dimens.md
-                            )
-                        ) {
-                            Text(
-                                text = species.name,
-                                color = AppStyle.colors.textPrimary
-                            )
-                            Text(
-                                text = species.scientificName,
-                                color = AppStyle.colors.textSecondary
-                            )
-                        }
+                        CircularProgressIndicator()
                     }
-                    HorizontalDivider(
-                        color = AppStyle.colors.divider
-                    )
                 }
-            }
-            if (filteredSpecies.isEmpty()) {
-                item {
+
+            } else if (errorMessage != null) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
-                        text = "No matching species found.",
-                        modifier = Modifier.padding(AppStyle.dimens.lg),
+                        text = errorMessage ?: "",
                         color = AppStyle.colors.textSecondary
                     )
+                }
+
+            } else if (
+                searchText.isBlank() &&
+                selectedCategory == "All"
+            ) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = "Search by name or select a category to explore.",
+                        color = AppStyle.colors.textSecondary
+                    )
+                }
+
+            } else if (filteredSpecies.isEmpty()) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = "No matching species found.",
+                        color = AppStyle.colors.textSecondary
+                    )
+                }
+
+            } else {
+                items(
+                    items = filteredSpecies,
+                    key = { species -> species.id }
+                ) { species ->
+
+                    Card(
+                        onClick = {
+                            onSpeciesClick(species.id)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = CardDefaults.cardColors(
+                            containerColor = AppStyle.colors.surface
+                        )
+                    ) {
+                        Column {
+                            if (species.imageUrl != null) {
+                                AsyncImage(
+                                    model = species.imageUrl,
+                                    contentDescription = species.commonName
+                                        ?: species.scientificName,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(4f / 3f)
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .aspectRatio(4f / 3f)
+                                        .background(AppStyle.colors.background),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Search,
+                                        contentDescription = null,
+                                        tint = AppStyle.colors.textSecondary
+                                    )
+                                }
+                            }
+
+                            Column(
+                                modifier = Modifier.padding(AppStyle.dimens.md),
+                                verticalArrangement = Arrangement.spacedBy(
+                                    AppStyle.dimens.sm
+                                )
+                            ) {
+                                Text(
+                                    text = species.commonName
+                                        ?: species.scientificName,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = AppStyle.colors.textPrimary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+
+                                Text(
+                                    text = species.scientificName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    fontStyle = FontStyle.Italic,
+                                    color = AppStyle.colors.textSecondary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
