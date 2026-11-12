@@ -14,6 +14,10 @@ sealed class Screen(
         destination = "map",
         title = "Map"
     )
+    data object Activity : Screen(
+        destination = "activity",
+        title = "Activity"
+    )
     data object Action : Screen(
         destination = "action",
         title = "Camera"
@@ -22,7 +26,7 @@ sealed class Screen(
         destination = "feed",
         title = "Feed"
     )
-//    data object Profile : Screen(
+    //    data object Profile : Screen(
 //        destination = "profile",
 //        title = "Profile"
 //    )
@@ -41,6 +45,31 @@ sealed class Screen(
         destination = "newPost",
         title = "New post"
     )
+
+    // Trails
+    data object AllTrails : Screen(
+        destination = "trails",
+        title = "Trails"
+    )
+
+    data object TrailWizard : Screen(
+        destination = "trailWizard",
+        title = "Create a trail"
+    )
+
+    data object TrailDetail : Screen(
+        destination = "trail/{trailId}",
+        title = "Trail"
+    ) {
+        fun route(trailId: String) = "trail/$trailId"
+    }
+
+    data object TrailEdit : Screen(
+        destination = "trail/{trailId}/edit",
+        title = "Edit trail"
+    ) {
+        fun route(trailId: String) = "trail/$trailId/edit"
+    }
 
     data object Camera : Screen(
         destination = "camera",
