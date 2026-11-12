@@ -42,6 +42,7 @@ import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.collect
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
