@@ -125,7 +125,6 @@ fun FeedScreenContent(
                 showSearch = false,
                 onBellClick = onOpenNotifications,
                 unreadNotifications = unreadNotifications,
-                onSignOut = onSignOut,
                 username = uiState.currentUserName,
             )
         },

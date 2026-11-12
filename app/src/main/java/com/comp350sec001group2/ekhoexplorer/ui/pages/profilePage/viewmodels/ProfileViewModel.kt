@@ -160,6 +160,18 @@ class ProfileViewModel(
     init {
         viewModelScope.launch {
             EhkoCache.activeUserFlow.collectLatest { activeUser ->
+                if (activeUser.isSignedIn) {
+                    container.journalRepository.observeDrafts(activeUser.userId).collect { drafts ->
+                        uiState = uiState.copy(observations = drafts.size)
+                    }
+                } else {
+                    uiState = uiState.copy(observations = 0)
+                }
+            }
+        }
+
+        viewModelScope.launch {
+            EhkoCache.activeUserFlow.collectLatest { activeUser ->
                 loadedUserId = null
 
                 if (!activeUser.isSignedIn) {
