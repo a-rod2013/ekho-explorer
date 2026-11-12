@@ -94,7 +94,7 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
 
             // main application screens
             navigation(
-                startDestination = "profile",
+                startDestination = Screen.Map.destination,
                 route = MAIN_ROUTE
             ) {
                 composable(Screen.Journal.destination) {
@@ -143,10 +143,8 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                     )
                 }
 
-
-                // profile is temporarily disabled pending a crash fix
-                composable("profile") {
-                    ProfileScreen()
+                composable(Screen.Profile.destination) {
+                    ProfileScreen(onSignOut = onSignOut)
                 }
 
                 composable(Screen.Species.destination) {

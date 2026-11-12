@@ -42,6 +42,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.draw.clip
+import com.comp350sec001group2.ekhoexplorer.ui.components.AccountMenu
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.profileViewModelFactory
 import androidx.compose.ui.platform.LocalContext
@@ -54,7 +55,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel(
         factory = profileViewModelFactory
-    )
+    ),
+    onSignOut: (() -> Unit)? = null
 ) {
     val uiState = viewModel.uiState
     LaunchedEffect(
@@ -93,7 +95,8 @@ fun ProfileScreen(
         onCancelBio = viewModel::cancelEditingBio,
         onPostClick = { post ->
             selectedPost = post
-        }
+        },
+        onSignOut = onSignOut
     )
 
     selectedPost?.let { post ->
@@ -131,7 +134,8 @@ fun ProfileScreenContent(
     onEditBio: () -> Unit,
     onBioDraftChange: (String) -> Unit,
     onSaveBio: () -> Unit,
-    onCancelBio: () -> Unit
+    onCancelBio: () -> Unit,
+    onSignOut: (() -> Unit)? = null
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -182,7 +186,9 @@ fun ProfileScreenContent(
                         }
                     }
                     Column(
-                        modifier = Modifier.padding(start = AppStyle.dimens.md),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = AppStyle.dimens.md),
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
@@ -230,6 +236,13 @@ fun ProfileScreenContent(
                             )
                         }
 
+                    }
+
+                    if (onSignOut != null) {
+                        AccountMenu(
+                            username = uiState.username,
+                            onSignOut = onSignOut
+                        )
                     }
                 }
             }
