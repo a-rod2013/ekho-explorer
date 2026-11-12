@@ -1,10 +1,8 @@
 package com.comp350sec001group2.ekhoexplorer.ui.map
 
 import android.Manifest
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
+import com.comp350sec001group2.ekhoexplorer.ui.components.hasAnyLocationPermission
+import com.comp350sec001group2.ekhoexplorer.ui.components.openAppSettings
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -44,9 +42,7 @@ import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.collect
-import android.provider.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.lifecycle.Lifecycle
@@ -54,19 +50,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
 
-private fun Context.hasAnyLocationPermission(): Boolean =
-    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
-        PackageManager.PERMISSION_GRANTED ||
-        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
-        PackageManager.PERMISSION_GRANTED
-
-private fun Context.openAppSettings() {
-    val intent = Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.fromParts("package", packageName, null)
-    ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-    startActivity(intent)
-}
 
 
 @Composable
