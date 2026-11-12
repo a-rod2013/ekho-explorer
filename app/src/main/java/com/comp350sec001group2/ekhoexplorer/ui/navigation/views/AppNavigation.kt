@@ -15,6 +15,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthState
+import com.comp350sec001group2.ekhoexplorer.ui.components.AppHeader
 import com.comp350sec001group2.ekhoexplorer.ui.map.MapScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.AUTH_ROUTE
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.MAIN_ROUTE
@@ -23,13 +24,13 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.views.FeedScre
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.SessionViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.sessionViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.SplashScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.views.NewPostScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.FieldJournalScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views.NotificationsScreen
-import com.comp350sec001group2.ekhoexplorer.ui.pages.createPost.views.NewPostScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
-
 
 @Composable
 fun AppNavigation(
@@ -52,15 +53,40 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
     val startRoute = remember {
         if (authState is AuthState.SignedIn) MAIN_ROUTE else AUTH_ROUTE
     }
+
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination =
         backStackEntry?.destination?.route ?: Screen.Map.destination
+
     // show the bottom bar only inside the main app
     val showBottomBar =
         backStackEntry?.destination?.hierarchy?.any { it.route == MAIN_ROUTE }
             ?: (startRoute == MAIN_ROUTE)
+
     AuthNavigationEffect(navController, authState)
+
     Scaffold(
+        topBar = {
+            if (showBottomBar) {
+                AppHeader(
+                    onSpeciesClick = {
+                        navController.navigate(Screen.Species.destination) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onNotificationsClick = {
+                        navController.navigate(Screen.Notifications.destination) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onSignOut = onSignOut,
+                    onSearchClick = {},
+                    isJournal = currentDestination == Screen.Journal.destination,
+                    isFeed = currentDestination == Screen.Feed.destination
+                )
+
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 AppBottomBar(

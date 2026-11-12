@@ -1,6 +1,13 @@
 package com.comp350sec001group2.ekhoexplorer.ui.map
 
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,7 +44,30 @@ import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.collect
+import android.provider.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
+
+
+private fun Context.hasAnyLocationPermission(): Boolean =
+    ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED ||
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) ==
+        PackageManager.PERMISSION_GRANTED
+
+private fun Context.openAppSettings() {
+    val intent = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", packageName, null)
+    ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+    startActivity(intent)
+}
+
 
 @Composable
 fun MapScreen(modifier: Modifier = Modifier) {
@@ -85,6 +115,90 @@ fun MapScreen(modifier: Modifier = Modifier) {
     // Stores markers displayed when a cluster expands
     val expandedMarkers = remember {
         mutableStateListOf<org.maplibre.android.annotations.Marker>()
+    }
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    var hasLocationPermission by remember { mutableStateOf(context.hasAnyLocationPermission()) }
+    var permissionRequestFinished by remember { mutableStateOf(hasLocationPermission) }
+    var appLocationPermissionsDialogDismissed by remember { mutableStateOf(false) }
+    var returningFromSettings by remember { mutableStateOf(false) }
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        hasLocationPermission =
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        permissionRequestFinished = true
+    }
+
+    val requestLocationPermission: () -> Unit = {
+        if (!hasLocationPermission) {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    // Launch location request when map starts
+    LaunchedEffect(Unit) { requestLocationPermission() }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                val granted = context.hasAnyLocationPermission()
+                hasLocationPermission = granted
+                if (granted) {
+                    appLocationPermissionsDialogDismissed = false
+                    returningFromSettings = false
+                } else if (returningFromSettings) {
+                    returningFromSettings = false
+                    permissionRequestFinished = false   // hide our dialog while the system prompt shows
+                    locationPermissionLauncher.launch(
+                        arrayOf(
+                            Manifest.permission.ACCESS_FINE_LOCATION,
+                            Manifest.permission.ACCESS_COARSE_LOCATION
+                        )
+                    )
+                }
+            }
+        }
+
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // For when location permissions are set to "Don't allow"
+    // (Android sometimes won't allow app to prompt again (depends on version))
+    if (permissionRequestFinished && !hasLocationPermission && !appLocationPermissionsDialogDismissed) {
+        AlertDialog(
+            onDismissRequest = { appLocationPermissionsDialogDismissed = true },
+            title = { Text("Location permission needed") },
+            text = {
+                Text(
+                    "Location access is turned off but is required for certain features"
+                )
+            },
+
+            confirmButton = {
+                Button(onClick = {
+                    returningFromSettings = true
+                    context.openAppSettings()
+                }) {
+                    Text("Open Settings")
+                }
+            },
+
+            dismissButton = {
+                TextButton(onClick = { appLocationPermissionsDialogDismissed = true }) {
+                    Text("Not now")
+                }
+            }
+        )
     }
 
     val mapView = remember {
@@ -263,117 +377,117 @@ fun MapScreen(modifier: Modifier = Modifier) {
 
                     // Get the phone's current GPS location
                     getObservationLocation(context) { location ->
-                        if (location != null) {
-
-                            // Create the observation
-                            val observation = ObservationMarker(
-                                id = UUID.randomUUID().toString(),
-                                commonName = commonName,
-                                scientificName = scientificName,
-                                category = category,
-                                description = description,
-                                photoUri = photoUri.toString(),
-                                location = location
-                            )
-
-                            // Save the observation in memory
-                            observations.add(observation)
-                            // Save the observation to the user's Journal
-                            val user = EhkoCache.activeUser
-
-                            if (user.isSignedIn) {
-                                coroutineScope.launch {
-                                    try {
-                                        // Import the observation photo into Journal storage
-                                        val savedPhotoPath = journalPhotoStorage.importPhoto(
-                                            ownerId = user.userId,
-                                            source = photoUri
-                                        )
-
-                                        // Create the Journal entry
-                                        val timestamp = System.currentTimeMillis()
-
-                                        val journalEntry = JournalDraft(
-                                            id = observation.id,
-                                            ownerId = user.userId,
-                                            title = commonName,
-                                            notes = """
-                                                Scientific name: $scientificName
-                                                Category: $category
-                                                Description: $description
-                                                Location: ${location.latitude}, ${location.longitude}
-                                            """.trimIndent(),
-                                            photoPaths = listOf(savedPhotoPath),
-                                            createdAtMillis = timestamp,
-                                            updatedAtMillis = timestamp
-                                        )
-
-                                        // Save the entry to Room
-                                        journalRepository.saveDraft(journalEntry)
-
-                                        Log.d(
-                                            "MapJournal",
-                                            "Journal entry saved: ${journalEntry.id}"
-                                        )
-
-                                    } catch (e: Exception) {
-                                        Log.e(
-                                            "MapJournal",
-                                            "Failed to save observation to Journal",
-                                            e
-                                        )
-                                    }
-                                }
-                            } else {
-                                Log.w(
-                                    "MapJournal",
-                                    "Observation not saved to Journal: user is signed out"
-                                )
-                            }
-
-                            // Refresh the map markers after saving
-                            map?.let { currentMap ->
-
-                                // Remove any expanded markers
-                                collapseCluster(
-                                    map = currentMap,
-                                    expandedMarkers = expandedMarkers,
-                                    markerObservations = markerObservations
-                                )
-
-                                expandedMarkers.clear()
-                                expandedCluster = null
-
-                                // Refresh observation clusters
-                                displayClusters(
-                                    context = context,
-                                    map = currentMap,
-                                    observations = observations,
-                                    markerObservations = markerObservations,
-                                    markerClusters = markerClusters
-                                )
-                            }
-
-                            // Move the camera to the observation
-                            map?.animateCamera(
-                                CameraUpdateFactory.newLatLngZoom(
-                                    observation.location,
-                                    16.0
-                                )
-                            )
-
-                            Log.d(
-                                "EkhoMap",
-                                "Saved ${observation.displayName} at " +
-                                    "${location.latitude}, ${location.longitude}"
-                            )
-
-                        } else {
+                        if (location == null) {
                             Log.e(
                                 "EkhoMap",
                                 "Could not save observation: location unavailable or permission missing"
                             )
+
+                            return@getObservationLocation
                         }
+
+                        // Create the observation
+                        val observation = ObservationMarker(
+                            id = UUID.randomUUID().toString(),
+                            commonName = commonName,
+                            scientificName = scientificName,
+                            category = category,
+                            description = description,
+                            photoUri = photoUri.toString(),
+                            location = location
+                        )
+
+                        // Save the observation in memory
+                        observations.add(observation)
+                        // Save the observation to the user's Journal
+                        val user = EhkoCache.activeUser
+
+                        if (user.isSignedIn) {
+                            coroutineScope.launch {
+                                try {
+                                    // Import the observation photo into Journal storage
+                                    val savedPhotoPath = journalPhotoStorage.importPhoto(
+                                        ownerId = user.userId,
+                                        source = photoUri
+                                    )
+
+                                    // Create the Journal entry
+                                    val timestamp = System.currentTimeMillis()
+
+                                    val journalEntry = JournalDraft(
+                                        id = observation.id,
+                                        ownerId = user.userId,
+                                        title = commonName,
+                                        notes = """
+                                            Scientific name: $scientificName
+                                            Category: $category
+                                            Description: $description
+                                            Location: ${location.latitude}, ${location.longitude}
+                                        """.trimIndent(),
+                                        photoPaths = listOf(savedPhotoPath),
+                                        createdAtMillis = timestamp,
+                                        updatedAtMillis = timestamp
+                                    )
+
+                                    // Save the entry to Room
+                                    journalRepository.saveDraft(journalEntry)
+
+                                    Log.d(
+                                        "MapJournal",
+                                        "Journal entry saved: ${journalEntry.id}"
+                                    )
+
+                                } catch (e: Exception) {
+                                    Log.e(
+                                        "MapJournal",
+                                        "Failed to save observation to Journal",
+                                        e
+                                    )
+                                }
+                            }
+                        } else {
+                            Log.w(
+                                "MapJournal",
+                                "Observation not saved to Journal: user is signed out"
+                            )
+                        }
+
+                        // Refresh the map markers after saving
+                        map?.let { currentMap ->
+
+                            // Remove any expanded markers
+                            collapseCluster(
+                                map = currentMap,
+                                expandedMarkers = expandedMarkers,
+                                markerObservations = markerObservations
+                            )
+
+                            expandedMarkers.clear()
+                            expandedCluster = null
+
+                            // Refresh observation clusters
+                            displayClusters(
+                                context = context,
+                                map = currentMap,
+                                observations = observations,
+                                markerObservations = markerObservations,
+                                markerClusters = markerClusters
+                            )
+                        }
+
+                        // Move the camera to the observation
+                        map?.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                observation.location,
+                                16.0
+                            )
+                        )
+
+                        Log.d(
+                            "EkhoMap",
+                            "Saved ${observation.displayName} at " +
+                                "${location.latitude}, ${location.longitude}"
+                        )
                     }
                 }
             )

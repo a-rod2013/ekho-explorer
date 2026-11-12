@@ -39,7 +39,6 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.fee
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 
-
 @Composable
 fun FeedScreen(
     viewModel: FeedViewModel = viewModel(factory = feedViewModelFactory),
@@ -113,6 +112,7 @@ fun FeedScreenContent(
             }
         },
 
+
         // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
         // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
 
@@ -128,6 +128,7 @@ fun FeedScreenContent(
                 username = uiState.currentUserName,
             )
         },
+
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
