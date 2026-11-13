@@ -128,7 +128,7 @@ fun ProfileScreen(
             ) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(AppStyle.dimens.radiusMd),
                     color = AppStyle.colors.background
                 ) {
                     PostCard(
@@ -455,7 +455,7 @@ fun ProfileScreenContent(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(AppStyle.dimens.lg),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
