@@ -1,6 +1,7 @@
 
 package com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels
 
+
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,6 +15,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.AppContainer
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
 import com.comp350sec001group2.ekhoexplorer.EkhoApp
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoLoader
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
@@ -25,6 +27,7 @@ import android.net.Uri
 import java.io.IOException
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -41,6 +44,8 @@ data class ProfileUiState(
     val posts: List<Post> = emptyList(),
     val isLoading: Boolean = true,
     val isSavingBio: Boolean = false,
+    val isLoadingPosts: Boolean = false,
+    val postsErrorMessage: String? = null,
     val errorMessage: String? = null,
     val isUploadingAvatar: Boolean = false,
     val avatarErrorMessage: String? = null,
@@ -50,7 +55,10 @@ data class ProfileUiState(
 
 class ProfileViewModel(
     private val container: AppContainer
+
 ) : ViewModel() {
+
+    val photos: PhotoLoader = container.photoRepository
 
     private val joinDateFormatter =
         SimpleDateFormat("MMMM yyyy", Locale.getDefault())
@@ -157,6 +165,56 @@ class ProfileViewModel(
         }
     }
 
+    private suspend fun loadUserPosts(userId: String) {
+
+        uiState = uiState.copy(
+            isLoadingPosts = true,
+            postsErrorMessage = null
+        )
+
+        try {
+            val userPosts = container.getUserPosts(userId)
+
+            val existingVotes = container.getUserPostVotes(
+                userId,
+                userPosts.map { it.id }
+            )
+
+            val postsWithVotes = userPosts.map { post ->
+                post.copy(
+                    myVote = existingVotes[post.id] ?: Vote.NONE
+                )
+            }
+
+            if (loadedUserId == userId &&
+                EhkoCache.activeUser.isSignedIn &&
+                EhkoCache.activeUser.userId == userId
+            ) {
+                uiState = uiState.copy(
+                    posts = postsWithVotes,
+                    isLoadingPosts = false,
+                    postsErrorMessage = null
+                )
+            }
+
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("ProfileViewModel", "Could not load user posts", e)
+
+            if (loadedUserId == userId &&
+                EhkoCache.activeUser.isSignedIn &&
+                EhkoCache.activeUser.userId == userId
+            ) {
+                uiState = uiState.copy(
+                    posts = emptyList(),
+                    isLoadingPosts = false,
+                    postsErrorMessage = "Could not load posts."
+                )
+            }
+        }
+    }
+
     init {
         viewModelScope.launch {
             EhkoCache.activeUserFlow.collectLatest { activeUser ->
@@ -211,6 +269,7 @@ class ProfileViewModel(
 
                         )
                         loadAvatar(activeUser.userId)
+                        loadUserPosts(activeUser.userId)
                     }
                 } catch (e: CancellationException) {
                     throw e
@@ -329,6 +388,85 @@ class ProfileViewModel(
             avatarErrorMessage = null
         )
     }
+
+    fun onPostVote(postId: String, tapped: Vote) {
+        val userId = loadedUserId ?: return
+
+        if (!EhkoCache.activeUser.isSignedIn ||
+            EhkoCache.activeUser.userId != userId
+        ) {
+            return
+        }
+
+        if (uiState.posts.none { it.id == postId }) return
+
+        viewModelScope.launch {
+            try {
+                container.voteOnProfilePost(postId, userId, tapped)
+
+                // Reload authoritative counts and current vote
+                // after the Firestore transaction succeeds.
+                loadUserPosts(userId)
+
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("ProfileViewModel", "Could not vote on post", e)
+            }
+        }
+    }
+
+    fun refreshUserPosts() {
+        val userId = loadedUserId ?: return
+
+        if (!EhkoCache.activeUser.isSignedIn ||
+            EhkoCache.activeUser.userId != userId
+        ) return
+
+        viewModelScope.launch {
+            loadUserPosts(userId)
+        }
+    }
+
+
+    fun onDeletePost(postId: String, onDeleted: () -> Unit) {
+        val userId = loadedUserId ?: return
+
+        if (!EhkoCache.activeUser.isSignedIn ||
+            EhkoCache.activeUser.userId != userId ||
+            uiState.posts.none { it.id == postId && it.userId == userId }
+        ) {
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                container.feedRepository.deletePost(postId)
+
+                if (loadedUserId == userId &&
+                    EhkoCache.activeUser.userId == userId
+                ) {
+                    uiState = uiState.copy(
+                        posts = uiState.posts.filterNot { it.id == postId },
+                        postsErrorMessage = null
+                    )
+
+                    onDeleted()
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w("ProfileViewModel", "Could not delete post", e)
+
+                if (loadedUserId == userId) {
+                    uiState = uiState.copy(
+                        postsErrorMessage = "Could not delete post."
+                    )
+                }
+            }
+        }
+    }
+
 
 }
 

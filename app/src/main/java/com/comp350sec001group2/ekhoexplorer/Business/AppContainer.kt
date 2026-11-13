@@ -3,6 +3,10 @@ package com.comp350sec001group2.ekhoexplorer.Business
 import android.content.Context
 import android.util.Log
 
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetFeedVotesQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.VoteOnFeedPostTransaction
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserPostsQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.UpdateUserAvatarCommand
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserAvatarQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserAvatar
@@ -50,6 +54,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSetting
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserProfileQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserProfile
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.UpdateUserBioCommand
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -66,6 +71,29 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
 
     suspend fun updateUserBio(userId: String, bio: String) {
         service.execute(UpdateUserBioCommand(userId, bio))
+    }
+
+    suspend fun getUserPosts(userId: String): List<Post> {
+        return service.execute(GetUserPostsQuery(userId))
+    }
+
+    suspend fun getUserPostVotes(
+        userId: String,
+        postIds: List<String>
+    ): Map<String, Vote> {
+        return postIds.chunked(30).fold(emptyMap()) { votes, chunk ->
+            votes + service.execute(GetFeedVotesQuery(userId, chunk))
+        }
+    }
+
+    suspend fun voteOnProfilePost(
+        postId: String,
+        userId: String,
+        vote: Vote
+    ): Vote {
+        return service.execute(
+            VoteOnFeedPostTransaction(postId, userId, vote)
+        )
     }
 
     suspend fun getUserAvatar(userId: String): UserAvatar? {

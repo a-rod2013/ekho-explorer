@@ -26,10 +26,10 @@ sealed class Screen(
         destination = "feed",
         title = "Feed"
     )
-    //    data object Profile : Screen(
-//        destination = "profile",
-//        title = "Profile"
-//    )
+        data object Profile : Screen(
+        destination = "profile",
+        title = "Profile"
+    )
     // additional screens outside the main navigation bar
     data object Species : Screen(
         destination = "Species",
