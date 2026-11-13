@@ -20,7 +20,9 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreService
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.CommentRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FeedRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreCommentRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetTrailAccessQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreFeedRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreTrailRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreNotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreUserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
@@ -41,6 +43,9 @@ import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoCache
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoPreparer
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Trails.FileWalkStore
+import com.comp350sec001group2.ekhoexplorer.Business.Trails.TrailRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Trails.WalkSession
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserProfileQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserProfile
@@ -126,6 +131,10 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
 
     val userRelationsRepository: UserRelationsRepository = FirestoreUserRelationsRepository(service)
 
+    val trailRepository: TrailRepository = FirestoreTrailRepository(service)
+
+    val walkSession = WalkSession(FileWalkStore(java.io.File(context.filesDir, "trail_walk.csv")))
+
     /** Comments are per post, so each post screen asks for its own repository. */
     fun commentRepositoryFor(postId: String): CommentRepository =
         FirestoreCommentRepository(
@@ -150,10 +159,20 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
                         Log.w("AppContainer", "Could not load blocked users: ${e.kind}", e)
                     }
                 }
+                // Admin status and the following list live on the users document.
+                appScope.launch {
+                    try {
+                        val access = service.execute(GetTrailAccessQuery(user.userId))
+                        EhkoCache.updateActiveUser { it.copy(isAdmin = access.isAdmin, following = access.following) }
+                    } catch (e: FirestoreException) {
+                        Log.w("AppContainer", "Could not load trail access: ${e.kind}", e)
+                    }
+                }
             }
 
             override suspend fun onSignedOut() {
                 feedRepository.clear()
+                trailRepository.clear()
                 EhkoCache.clear()
             }
         },

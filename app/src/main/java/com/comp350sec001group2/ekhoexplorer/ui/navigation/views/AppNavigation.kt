@@ -17,6 +17,11 @@ import androidx.navigation.navigation
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthState
 import com.comp350sec001group2.ekhoexplorer.ui.components.AppHeader
 import com.comp350sec001group2.ekhoexplorer.ui.map.MapScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.activity.views.ActivityScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.activity.views.AllTrailsScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.trailDetail.views.TrailDetailScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.trailWizard.views.TrailEditScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.trailWizard.views.TrailWizardScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.AUTH_ROUTE
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.MAIN_ROUTE
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.Screen
@@ -135,12 +140,53 @@ private fun AppNavHost(authState: AuthState, onSignOut: () -> Unit) {
                     MapScreen()
                 }
 
+                composable(Screen.Activity.destination) {
+                    ActivityScreen(
+                        onViewTrails = { navController.navigate(Screen.AllTrails.destination) },
+                        onOpenTrail = { id -> navController.navigate(Screen.TrailDetail.route(id)) },
+                    )
+                }
+
+                composable(Screen.AllTrails.destination) {
+                    AllTrailsScreen(
+                        onCreateTrail = { navController.navigate(Screen.TrailWizard.destination) },
+                        onOpenTrail = { id -> navController.navigate(Screen.TrailDetail.route(id)) },
+                    )
+                }
+
+                composable(Screen.TrailWizard.destination) {
+                    TrailWizardScreen(
+                        onSaved = { id ->
+                            // Replace the wizard with the new trail's page.
+                            navController.navigate(Screen.TrailDetail.route(id)) {
+                                popUpTo(Screen.TrailWizard.destination) { inclusive = true }
+                            }
+                        },
+                    )
+                }
+
+                composable(Screen.TrailDetail.destination) { entry ->
+                    val trailId = entry.arguments?.getString("trailId").orEmpty()
+                    TrailDetailScreen(
+                        trailId = trailId,
+                        onEdit = { id -> navController.navigate(Screen.TrailEdit.route(id)) },
+                        onDeleted = { navController.popBackStack() },
+                    )
+                }
+
                 composable(Screen.Feed.destination) {
                     FeedScreen(
                         onOpenNotifications = {
                             navController.navigate(Screen.Notifications.destination)
                         },
                         onSignOut = onSignOut,
+                    )
+                }
+
+                composable(Screen.TrailEdit.destination) { entry ->
+                    TrailEditScreen(
+                        trailId = entry.arguments?.getString("trailId").orEmpty(),
+                        onSaved = { navController.popBackStack() },
                     )
                 }
 

@@ -19,6 +19,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Hiking
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
@@ -42,6 +43,7 @@ fun AppBottomBar(
     val items = listOf(
         Screen.Journal to Icons.Filled.Book,
         Screen.Map to Icons.Filled.Explore,
+        Screen.Activity to Icons.Filled.Hiking,
         Screen.Action to Icons.Filled.CameraAlt,
         Screen.Feed to Icons.Filled.Forum,
         Screen.Profile to Icons.Filled.Person
