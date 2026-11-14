@@ -35,6 +35,13 @@ sealed class Screen(
         destination = "Species",
         title = "Species"
     )
+    data object SpeciesDetails : Screen(
+        destination = "species/{speciesId}",
+        title = "Species Details"
+    ) {
+        fun route(speciesId: Int) = "species/$speciesId"
+    }
+
     data object Notifications : Screen(
         destination = "notifications",
         title = "Notifications"
