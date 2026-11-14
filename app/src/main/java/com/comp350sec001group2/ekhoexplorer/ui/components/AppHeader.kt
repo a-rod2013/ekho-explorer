@@ -157,6 +157,7 @@ fun AppHeader(
                         )
                     }
                 }
+
             }
         }
         IconButton(onClick = onSearchClick) {

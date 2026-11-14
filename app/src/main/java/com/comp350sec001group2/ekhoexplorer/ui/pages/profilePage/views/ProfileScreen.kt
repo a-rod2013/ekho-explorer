@@ -50,6 +50,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun ProfileScreen(
     onSignOut: () -> Unit = {},
+    onChangePassword: (() -> Unit)? = null,
+    onRequestUsernameChange: (() -> Unit)? = null,
     viewModel: ProfileViewModel = viewModel(
         factory = profileViewModelFactory
     )
@@ -112,7 +114,9 @@ fun ProfileScreen(
             onPostClick = { post ->
                 selectedPost = post
             },
-            onSignOut = onSignOut
+            onSignOut = onSignOut,
+            onChangePassword = onChangePassword,
+            onRequestUsernameChange = onRequestUsernameChange
         )
 
         // Displays the selected post in a dialog.
@@ -175,7 +179,9 @@ fun ProfileScreenContent(
     onSaveBio: () -> Unit,
     onCancelBio: () -> Unit,
     onAvatarClick: () -> Unit = {},
-    onSignOut: (() -> Unit)? = null
+    onSignOut: (() -> Unit)? = null,
+    onChangePassword: (() -> Unit)? = null,
+    onRequestUsernameChange: (() -> Unit)? = null
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -287,7 +293,9 @@ fun ProfileScreenContent(
                     if (onSignOut != null) {
                         AccountMenu(
                             username = uiState.username,
-                            onSignOut = onSignOut
+                            onSignOut = onSignOut,
+                            onChangePassword = onChangePassword,
+                            onRequestUsernameChange = onRequestUsernameChange
                         )
                     }
                 }

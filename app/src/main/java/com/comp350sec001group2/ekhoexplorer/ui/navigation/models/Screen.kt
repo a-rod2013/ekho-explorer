@@ -26,9 +26,20 @@ sealed class Screen(
         destination = "feed",
         title = "Feed"
     )
-        data object Profile : Screen(
+    data object Profile : Screen(
         destination = "profile",
         title = "Profile"
+    )
+
+    // Opened from the settings menu on the profile page
+    data object UsernameChange : Screen(
+        destination = "usernameChange",
+        title = "Change username"
+    )
+
+    data object ChangePassword : Screen(
+        destination = "changePassword",
+        title = "Change password"
     )
     // additional screens outside the main navigation bar
     data object Species : Screen(

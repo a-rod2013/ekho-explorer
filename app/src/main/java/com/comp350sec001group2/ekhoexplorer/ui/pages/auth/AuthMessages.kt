@@ -5,6 +5,8 @@ import com.comp350sec001group2.ekhoexplorer.Business.Auth.InputProblem
 
 object AuthMessages {
 
+    const val RESET_SENT = "If an account uses that email, a reset link is on its way. Check your spam folder too."
+
     fun email(problem: InputProblem): String = when (problem) {
         InputProblem.EMPTY -> "Enter your email"
         else -> "Enter a valid email address"
@@ -19,6 +21,7 @@ object AuthMessages {
     fun newPassword(problem: InputProblem): String = when (problem) {
         InputProblem.EMPTY -> "Choose a password"
         InputProblem.PASSWORD_SHORT -> "Use 8 to 128 characters"
+        InputProblem.PASSWORD_WEAK -> "Use at least one letter and one number"
         else -> "Check your password"
     }
 

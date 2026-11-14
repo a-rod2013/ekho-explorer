@@ -37,7 +37,9 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.trailWizard.views.TrailEdit
 import com.comp350sec001group2.ekhoexplorer.ui.pages.trailWizard.views.TrailWizardScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesDetailsScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
-import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.changePasswordViewModelFactory
+import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.ForgotPasswordScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UsernameChangeScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
 
 @Composable
@@ -331,7 +333,35 @@ private fun AppNavHost(
                     )
                 }
 
-                // Profile temporarily disabled pending crash fix
+                composable(Screen.Profile.destination) {
+                    ProfileScreen(
+                        onSignOut = onSignOut,
+                        onChangePassword = {
+                            navController.navigate(Screen.ChangePassword.destination) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onRequestUsernameChange = {
+                            navController.navigate(Screen.UsernameChange.destination) {
+                                launchSingleTop = true
+                            }
+                        },
+                    )
+                }
+
+                composable(Screen.UsernameChange.destination) {
+                    UsernameChangeScreen(onBack = { navController.popBackStack() })
+                }
+
+                composable(Screen.ChangePassword.destination) {
+                    ForgotPasswordScreen(
+                        onBackToLogin = { navController.popBackStack() },
+                        viewModel = viewModel(factory = changePasswordViewModelFactory),
+                        title = "Change your password",
+                        subtitle = "We will email a link to your account address so you can choose a new password.",
+                        backLabel = "Back to profile",
+                    )
+                }
             }
         }
     }

@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.focus.FocusDirection
@@ -34,6 +35,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 @Composable
 fun LoginScreen(
     onCreateAccount: () -> Unit,
+    onForgotPassword: () -> Unit,
     viewModel: LoginViewModel = viewModel(factory = loginViewModelFactory),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -43,6 +45,7 @@ fun LoginScreen(
         onPasswordChange = viewModel::onPasswordChange,
         onSubmit = viewModel::onSubmit,
         onCreateAccount = onCreateAccount,
+        onForgotPassword = onForgotPassword,
     )
 }
 
@@ -53,6 +56,7 @@ fun LoginScreenContent(
     onPasswordChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onCreateAccount: () -> Unit,
+    onForgotPassword: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val focus = LocalFocusManager.current
@@ -91,6 +95,13 @@ fun LoginScreenContent(
                 },
             )
         }
+        TextButton(
+            onClick = onForgotPassword,
+            enabled = !state.isLoading,
+            modifier = Modifier.align(Alignment.End).testTag("login-forgot-password"),
+        ) {
+            Text("Forgot password?", color = AppStyle.colors.accent, style = AppStyle.type.captionAction)
+        }
         AuthErrorText(state.error?.let(AuthMessages::error))
         AuthButton(
             text = "Sign in",
@@ -115,7 +126,7 @@ fun LoginScreenContent(
 @Composable
 private fun LoginPreview() {
     EkhoExplorerTheme {
-        LoginScreenContent(LoginUiState(email = "jane@example.com"), {}, {}, {}, {})
+        LoginScreenContent(LoginUiState(email = "jane@example.com"), {}, {}, {}, {}, {})
     }
 }
 
@@ -129,7 +140,7 @@ private fun LoginErrorPreview() {
                 emailProblem = InputProblem.EMAIL_FORMAT,
                 error = AuthErrorKind.WRONG_CREDENTIALS,
             ),
-            {}, {}, {}, {},
+            {}, {}, {}, {}, {},
         )
     }
 }
