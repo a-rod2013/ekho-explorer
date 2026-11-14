@@ -30,6 +30,7 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
 import com.comp350sec001group2.ekhoexplorer.ui.components.EmptyState
+import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
 import com.comp350sec001group2.ekhoexplorer.ui.components.LocalPhotoLoader
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
@@ -110,6 +111,24 @@ fun FeedScreenContent(
                 }
             }
         },
+
+
+        // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
+        // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
+
+        // Same header with the search field left out (see above) and the notification bell added.
+        topBar = {
+            FeedHeader(
+                query = uiState.query,
+                onQueryChange = onQueryChange,
+                onSearch = onSearch,
+                showSearch = false,
+                onBellClick = onOpenNotifications,
+                unreadNotifications = unreadNotifications,
+                username = uiState.currentUserName,
+            )
+        },
+
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,

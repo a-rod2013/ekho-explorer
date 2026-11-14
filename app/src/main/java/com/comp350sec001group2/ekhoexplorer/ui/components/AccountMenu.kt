@@ -2,7 +2,7 @@ package com.comp350sec001group2.ekhoexplorer.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -31,8 +31,8 @@ fun AccountMenu(
     Box(modifier) {
         IconButton(onClick = { expanded = true }, modifier = Modifier.testTag("account-button")) {
             Icon(
-                imageVector = Icons.Filled.AccountCircle,
-                contentDescription = "Account",
+                imageVector = Icons.Filled.Settings,
+                contentDescription = "Settings",
                 tint = AppStyle.colors.textSecondary,
             )
         }

@@ -72,9 +72,6 @@ fun FeedHeader(
         if (onBellClick != null) {
             NotificationBell(unreadCount = unreadNotifications, onClick = onBellClick)
         }
-        if (onSignOut != null) {
-            AccountMenu(username = username, onSignOut = onSignOut)
-        }
     }
 }
 

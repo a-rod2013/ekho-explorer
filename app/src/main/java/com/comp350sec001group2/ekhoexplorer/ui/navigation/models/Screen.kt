@@ -26,15 +26,22 @@ sealed class Screen(
         destination = "feed",
         title = "Feed"
     )
-    //    data object Profile : Screen(
-//        destination = "profile",
-//        title = "Profile"
-//    )
+        data object Profile : Screen(
+        destination = "profile",
+        title = "Profile"
+    )
     // additional screens outside the main navigation bar
     data object Species : Screen(
         destination = "Species",
         title = "Species"
     )
+    data object SpeciesDetails : Screen(
+        destination = "species/{speciesId}",
+        title = "Species Details"
+    ) {
+        fun route(speciesId: Int) = "species/$speciesId"
+    }
+
     data object Notifications : Screen(
         destination = "notifications",
         title = "Notifications"
