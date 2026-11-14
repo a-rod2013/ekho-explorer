@@ -28,30 +28,29 @@ data class CommentsUIState(
 
 class CommentsViewModel(private val repository: CommentRepository) : ViewModel() {
 
-    private val loading = MutableStateFlow(true)
     private val error = MutableStateFlow<FirestoreErrorKind?>(null)
 
     val uiState: StateFlow<CommentsUIState> =
-        combine(repository.comments, repository.hasMore, loading, error) { comments, more, l, e ->
+        combine(
+            repository.comments,
+            repository.hasMore,
+            repository.isLoading,
+            combine(repository.streamError, error) { stream, action -> stream ?: action },
+        ) { comments, more, l, e ->
             CommentsUIState(comments = comments, isLoading = l, hasMore = more, error = e)
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CommentsUIState())
 
-    init { loadMore() }
-
-    fun loadMore() = launchGuarded(showLoading = true) { repository.loadMore() }
+    fun loadMore() = launchGuarded { repository.loadMore() }
     fun onSend(text: String) = launchGuarded { repository.add(text) }
     fun onVote(commentId: String, tapped: Vote) = launchGuarded { repository.vote(commentId, tapped) }
 
-    private fun launchGuarded(showLoading: Boolean = false, block: suspend () -> Unit) {
+    private fun launchGuarded(block: suspend () -> Unit) {
         viewModelScope.launch {
-            if (showLoading) loading.value = true
             try {
                 block()
                 error.value = null
             } catch (e: FirestoreException) {
                 error.value = e.kind
-            } finally {
-                if (showLoading) loading.value = false
             }
         }
     }
