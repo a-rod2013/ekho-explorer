@@ -26,10 +26,16 @@ fun PostCard(
     onDelete: () -> Unit = {},
     onHideUser: () -> Unit = {},
     onBlockUser: () -> Unit = {},
+    onOpenProfile: (() -> Unit)? = null,
 ) {
     val d = AppStyle.dimens
     Column(modifier = modifier.fillMaxWidth().background(AppStyle.colors.background)) {
-        PostHeaderRow(avatarUrl = post.avatarUrl, username = post.username, userId = post.userId) {
+        PostHeaderRow(
+            avatarUrl = post.avatarUrl,
+            username = post.username,
+            userId = post.userId,
+            onProfileClick = onOpenProfile,
+        ) {
             PostMenu(
                 username = post.username,
                 isOwner = isOwner,

@@ -5,6 +5,9 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -39,6 +42,7 @@ fun PostHeaderRow(
     username: String,
     modifier: Modifier = Modifier,
     userId: String = "",
+    onProfileClick: (() -> Unit)? = null,
     trailing: @Composable () -> Unit = {},
 ) {
     val d = AppStyle.dimens
@@ -89,12 +93,21 @@ fun PostHeaderRow(
         horizontalArrangement = Arrangement.spacedBy(d.md)
     ) {
 
+        val openProfile = onProfileClick.takeIf { userId.isNotBlank() }
+        val profileClick = if (openProfile != null) {
+            Modifier.clickable(onClickLabel = "Open profile of $username", role = Role.Button, onClick = openProfile)
+        } else {
+            Modifier
+        }
+
         // Display a saved avatar, legacy image, or default silhouette.
         Box(
             modifier = Modifier
                 .size(d.avatar)
                 .clip(CircleShape)
-                .background(AppStyle.colors.surface),
+                .background(AppStyle.colors.surface)
+                .then(profileClick)   // BUG FIX 02
+                .testTag("post-avatar"),
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -131,7 +144,7 @@ fun PostHeaderRow(
             text = username,
             style = AppStyle.type.username,
             color = AppStyle.colors.textPrimary,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f).then(profileClick)
         )
         trailing()
     }

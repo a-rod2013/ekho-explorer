@@ -38,7 +38,14 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.trailWizard.views.TrailWiza
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesDetailsScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.changePasswordViewModelFactory
+import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.ForgotPasswordScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UsernameChangeScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UserProfileScreen
 
 @Composable
 fun AppNavigation(
@@ -75,6 +82,20 @@ private fun AppNavHost(
     }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
+
+    val openProfile: (String) -> Unit = { userId ->
+        if (userId.isNotBlank()) {
+            if (userId == EhkoCache.activeUser.userId) {
+                navController.navigate(Screen.Profile.destination) {
+                    popUpTo(Screen.Map.destination) { saveState = false }
+                    launchSingleTop = true
+                    restoreState = false
+                }
+            } else {
+                navController.navigate(Screen.UserProfile.route(userId)) { launchSingleTop = true }
+            }
+        }
+    }
 
     val currentDestination =
         backStackEntry?.destination?.route ?: Screen.Map.destination
@@ -118,10 +139,12 @@ private fun AppNavHost(
                         Screen.Activity.destination -> "Activity"
                         Screen.Feed.destination -> "Feed"
                         Screen.Species.destination -> "Species Search"
+                        Screen.UserProfile.destination -> "Profile"
                         else -> null
                     },
                     onBackClick = if (
-                        currentDestination == Screen.Species.destination
+                        currentDestination == Screen.Species.destination ||
+                        currentDestination == Screen.UserProfile.destination
                     ) {
                         { navController.popBackStack() }
                     } else {
@@ -283,7 +306,8 @@ private fun AppNavHost(
                                 Screen.Notifications.destination
                             )
                         },
-                        onSignOut = onSignOut
+                        onSignOut = onSignOut,
+                        onOpenProfile = openProfile
                     )
                 }
 
@@ -304,7 +328,8 @@ private fun AppNavHost(
                     NotificationsScreen(
                         onBack = {
                             navController.popBackStack()
-                        }
+                        },
+                        onOpenProfile = openProfile
                     )
                 }
 
@@ -331,7 +356,45 @@ private fun AppNavHost(
                     )
                 }
 
-                // Profile temporarily disabled pending crash fix
+                composable(Screen.Profile.destination) {
+                    ProfileScreen(
+                        onSignOut = onSignOut,
+                        onChangePassword = {
+                            navController.navigate(Screen.ChangePassword.destination) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onRequestUsernameChange = {
+                            navController.navigate(Screen.UsernameChange.destination) {
+                                launchSingleTop = true
+                            }
+                        },
+                    )
+                }
+
+                composable(
+                    route = Screen.UserProfile.destination,
+                    arguments = listOf(navArgument("userId") { type = NavType.StringType }),
+                ) { entry ->
+                    UserProfileScreen(
+                        userId = entry.arguments?.getString("userId").orEmpty(),
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+
+                composable(Screen.UsernameChange.destination) {
+                    UsernameChangeScreen(onBack = { navController.popBackStack() })
+                }
+
+                composable(Screen.ChangePassword.destination) {
+                    ForgotPasswordScreen(
+                        onBackToLogin = { navController.popBackStack() },
+                        viewModel = viewModel(factory = changePasswordViewModelFactory),
+                        title = "Change your password",
+                        subtitle = "We will email a link to your account address so you can choose a new password.",
+                        backLabel = "Back to profile",
+                    )
+                }
             }
         }
     }

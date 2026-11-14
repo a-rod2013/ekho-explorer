@@ -13,6 +13,8 @@ import com.comp350sec001group2.ekhoexplorer.EkhoApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,7 +33,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
@@ -53,7 +54,6 @@ import coil.compose.AsyncImage
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Comment
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.CommentFields
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
-import com.comp350sec001group2.ekhoexplorer.ui.components.VoteBar
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.CommentsUIState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.CommentsViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.commentsViewModelFactory
@@ -62,7 +62,11 @@ import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 /** Bottom sheet listing a post's comments, with votes and a box to add one. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CommentsSheet(postId: String, onDismiss: () -> Unit) {
+fun CommentsSheet(
+    postId: String,
+    onDismiss: () -> Unit,
+    onOpenProfile: ((userId: String) -> Unit)? = null,
+) {
     val viewModel: CommentsViewModel = viewModel(
         key = "comments_$postId",
         factory = commentsViewModelFactory(postId),
@@ -79,6 +83,7 @@ fun CommentsSheet(postId: String, onDismiss: () -> Unit) {
             onVote = viewModel::onVote,
             onSend = viewModel::onSend,
             onLoadMore = viewModel::loadMore,
+            onOpenProfile = onOpenProfile?.let { open -> { userId -> onDismiss(); open(userId) } },   // BUG FIX 02
             modifier = Modifier.fillMaxHeight(SHEET_HEIGHT_FRACTION),
         )
     }
@@ -93,6 +98,7 @@ fun CommentsContent(
     onSend: (String) -> Unit,
     onLoadMore: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenProfile: ((userId: String) -> Unit)? = null,
 ) {
     val d = AppStyle.dimens
     Column(modifier = modifier.fillMaxWidth().imePadding()) {
@@ -116,7 +122,11 @@ fun CommentsContent(
                 }
             }
             items(items = uiState.comments, key = { it.id }) { comment ->
-                CommentRow(comment = comment, onVote = { vote -> onVote(comment.id, vote) })
+                CommentRow(
+                    comment = comment,
+                    onVote = { vote -> onVote(comment.id, vote) },
+                    onOpenProfile = onOpenProfile?.let { open -> { open(comment.userId) } },   // BUG FIX 02
+                )
             }
             if (uiState.hasMore && !uiState.isLoading) {
                 item {
@@ -143,7 +153,12 @@ fun CommentsContent(
 }
 
 @Composable
-private fun CommentRow(comment: Comment, onVote: (Vote) -> Unit, modifier: Modifier = Modifier) {
+private fun CommentRow(
+    comment: Comment,
+    onVote: (Vote) -> Unit,
+    modifier: Modifier = Modifier,
+    onOpenProfile: (() -> Unit)? = null,
+) {
 
     val context = LocalContext.current
     val app = context.applicationContext as EkhoApp
@@ -182,11 +197,18 @@ private fun CommentRow(comment: Comment, onVote: (Vote) -> Unit, modifier: Modif
         horizontalArrangement = Arrangement.spacedBy(d.md),
     ) {
 
+        val profileClick = if (onOpenProfile != null && comment.userId.isNotBlank()) {
+            Modifier.clickable(onClickLabel = "Open profile of ${comment.username}", role = Role.Button, onClick = onOpenProfile)
+        } else {
+            Modifier
+        }
+
         Box(
             modifier = Modifier
                 .size(d.avatar)
                 .clip(CircleShape)
-                .background(AppStyle.colors.surface),
+                .background(AppStyle.colors.surface)
+                .then(profileClick),   // BUG FIX 02
             contentAlignment = Alignment.Center
         ) {
             when {
@@ -220,7 +242,12 @@ private fun CommentRow(comment: Comment, onVote: (Vote) -> Unit, modifier: Modif
         }
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = comment.username, style = AppStyle.type.username, color = AppStyle.colors.textPrimary)
+            Text(
+                text = comment.username,
+                style = AppStyle.type.username,
+                color = AppStyle.colors.textPrimary,
+                modifier = Modifier.then(profileClick),   // BUG FIX 02
+            )
             Text(text = comment.text, style = AppStyle.type.caption, color = AppStyle.colors.textPrimary)
             VoteBar(
                 upCount = comment.upCount,
