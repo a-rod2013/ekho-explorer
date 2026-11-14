@@ -29,7 +29,7 @@ fun PostCard(
 ) {
     val d = AppStyle.dimens
     Column(modifier = modifier.fillMaxWidth().background(AppStyle.colors.background)) {
-        PostHeaderRow(avatarUrl = post.avatarUrl, username = post.username) {
+        PostHeaderRow(avatarUrl = post.avatarUrl, username = post.username, userId = post.userId) {
             PostMenu(
                 username = post.username,
                 isOwner = isOwner,

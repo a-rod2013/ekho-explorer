@@ -37,6 +37,8 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.trailWizard.views.TrailEdit
 import com.comp350sec001group2.ekhoexplorer.ui.pages.trailWizard.views.TrailWizardScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesDetailsScreen
 import com.comp350sec001group2.ekhoexplorer.ui.species.SpeciesSearchScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.camera.CameraScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
 
 @Composable
 fun AppNavigation(
@@ -334,3 +336,4 @@ private fun AppNavHost(
         }
     }
 }
+
