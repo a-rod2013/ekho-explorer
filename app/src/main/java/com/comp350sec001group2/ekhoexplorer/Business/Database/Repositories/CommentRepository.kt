@@ -12,6 +12,10 @@ interface CommentRepository {
     /** False once every comment has been loaded. */
     val hasMore: Flow<Boolean>
 
+    val isLoading: Flow<Boolean>
+
+    val streamError: Flow<com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreErrorKind?>
+
     suspend fun loadMore()
     suspend fun add(text: String)
     suspend fun vote(commentId: String, tapped: Vote)
