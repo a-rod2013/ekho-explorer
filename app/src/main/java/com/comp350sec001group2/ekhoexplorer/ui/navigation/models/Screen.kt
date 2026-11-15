@@ -26,6 +26,7 @@ sealed class Screen(
         destination = "feed",
         title = "Feed"
     )
+
     data object Profile : Screen(
         destination = "profile",
         title = "Profile"

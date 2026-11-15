@@ -114,6 +114,7 @@ fun ProfileScreen(
             onPostClick = { post ->
                 selectedPost = post
             },
+
             onSignOut = onSignOut,
             onChangePassword = onChangePassword,
             onRequestUsernameChange = onRequestUsernameChange
