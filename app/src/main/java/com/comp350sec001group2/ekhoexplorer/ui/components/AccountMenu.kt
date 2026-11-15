@@ -24,6 +24,8 @@ fun AccountMenu(
     username: String,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
+    onChangePassword: (() -> Unit)? = null,
+    onRequestUsernameChange: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var confirming by remember { mutableStateOf(false) }
@@ -42,6 +44,20 @@ fun AccountMenu(
                     text = { Text("Signed in as $username") },
                     onClick = {},
                     enabled = false,
+                )
+            }
+            if (onChangePassword != null) {
+                DropdownMenuItem(
+                    text = { Text("Change password") },
+                    onClick = { expanded = false; onChangePassword() },
+                    modifier = Modifier.testTag("change-password-item"),
+                )
+            }
+            if (onRequestUsernameChange != null) {
+                DropdownMenuItem(
+                    text = { Text("Request username change") },
+                    onClick = { expanded = false; onRequestUsernameChange() },
+                    modifier = Modifier.testTag("username-change-item"),
                 )
             }
             DropdownMenuItem(

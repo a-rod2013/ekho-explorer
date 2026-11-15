@@ -26,6 +26,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.components.AuthB
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.components.AuthErrorText
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.components.AuthLayout
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.components.AuthTextField
+import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.components.PasswordChecklist
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.components.PasswordField
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
@@ -100,6 +101,7 @@ fun SignUpScreenContent(
                 onImeAction = next,
                 isNewPassword = true,
             )
+            PasswordChecklist(state.password)
             PasswordField(
                 value = state.confirmPassword,
                 onValueChange = onConfirmPasswordChange,

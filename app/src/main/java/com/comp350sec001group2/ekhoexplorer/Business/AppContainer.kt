@@ -15,6 +15,8 @@ import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthBackend
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirestoreProfileStore
+import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirestoreSupportRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Auth.SupportRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.SessionHooks
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.ActiveUser
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
@@ -172,6 +174,8 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
             onCommentAdded = { feedRepository.onCommentAdded(postId) },
         )
 
+    val supportRepository: SupportRepository = FirestoreSupportRepository(service)
+
     val authRepository: AuthRepository = FirebaseAuthRepository(
         backend = FirebaseAuthBackend(),
         profiles = FirestoreProfileStore(service),
@@ -187,7 +191,17 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
                         Log.w("AppContainer", "Could not load blocked users: ${e.kind}", e)
                     }
                 }
-                // Admin status and the following list live on the users document.
+
+                appScope.launch {
+                    try {
+                        service.execute(GetUserProfileQuery(user.userId))?.let { profile ->
+                            EhkoCache.updateActiveUser { it.copy(userName = profile.username) }
+                        }
+                    } catch (e: FirestoreException) {
+                        Log.w("AppContainer", "Could not refresh the username: ${e.kind}", e)
+                    }
+                }
+
                 appScope.launch {
                     try {
                         val access = service.execute(GetTrailAccessQuery(user.userId))

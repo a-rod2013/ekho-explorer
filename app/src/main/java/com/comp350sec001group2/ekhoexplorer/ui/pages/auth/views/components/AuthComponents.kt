@@ -191,10 +191,11 @@ fun AuthButton(
     loading: Boolean,
     testTag: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     Button(
         onClick = onClick,
-        enabled = !loading,
+        enabled = enabled && !loading,
         colors = ButtonDefaults.buttonColors(
             containerColor = AppStyle.colors.accent,
             contentColor = AppStyle.colors.onAccent,
