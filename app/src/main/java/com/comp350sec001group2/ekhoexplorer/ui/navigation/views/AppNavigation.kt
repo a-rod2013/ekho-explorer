@@ -41,6 +41,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.viewmodels.changePassw
 import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.ForgotPasswordScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UsernameChangeScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UserProfileScreen
 
 @Composable
 fun AppNavigation(
@@ -285,7 +286,12 @@ private fun AppNavHost(
                                 Screen.Notifications.destination
                             )
                         },
-                        onSignOut = onSignOut
+                        onSignOut = onSignOut,
+                        onUserClick = { userId ->
+                            navController.navigate(
+                                Screen.UserProfile.route(userId)
+                            )
+                        }
                     )
                 }
 
@@ -346,6 +352,14 @@ private fun AppNavHost(
                                 launchSingleTop = true
                             }
                         },
+                    )
+                }
+
+                composable(Screen.UserProfile.destination) { entry ->
+                    val userId = entry.arguments?.getString("userId").orEmpty()
+                    UserProfileScreen(
+                        userId = userId,
+                        onBack = { navController.popBackStack() }
                     )
                 }
 

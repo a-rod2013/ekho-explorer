@@ -32,6 +32,14 @@ sealed class Screen(
         title = "Profile"
     )
 
+    // Opened when tapping a user's avatar / username in the feed
+    data object UserProfile : Screen(
+        destination = "userProfile/{userId}",
+        title = "User Profile"
+    ) {
+        fun route(userId: String) = "userProfile/$userId"
+    }
+
     // Opened from the settings menu on the profile page
     data object UsernameChange : Screen(
         destination = "usernameChange",
