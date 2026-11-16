@@ -25,6 +25,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -567,7 +571,7 @@ fun MapScreen(
         // Map controls
         Column(
             modifier = Modifier
-                .align(Alignment.TopEnd)
+                .align(Alignment.BottomEnd)
                 .padding(AppStyle.dimens.lg),
             verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
         ) {
@@ -583,25 +587,6 @@ fun MapScreen(
                     )
                 }
             )
-
-            Button(
-                onClick = {
-                    getObservationLocation(context) { location ->
-                        if (location != null) {
-                            map?.animateCamera(
-                                CameraUpdateFactory.newLatLngZoom(
-                                    location,
-                                    16.0
-                                )
-                            )
-                        } else {
-                            Log.e("EkhoMap", "Could not get current location")
-                        }
-                    }
-                }
-            ) {
-                Text("My Location")
-            }
 
             // Add an observation
             AddMarker(
@@ -758,16 +743,41 @@ fun MapScreen(
 
 
         }
+        // My Location button
+        IconButton(
+            onClick = {
+                getObservationLocation(context) { location ->
+                    if (location != null) {
+                        map?.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                location,
+                                16.0
+                            )
+                        )
+                    } else {
+                        Log.e("EkhoMap", "Could not get current location")
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(AppStyle.dimens.lg)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MyLocation,
+                contentDescription = "My Location"
+            )
     }
-    // Show details for the selected observation
-    selectedObservation?.let { observation ->
-        ObservationDetails(
-            observation = observation,
-            photoRepository = app.container.observationPhotoRepository,
-            onDismiss = {
-                selectedObservation = null
-            }
-        )
+        // Show details for the selected observation
+        selectedObservation?.let { observation ->
+            ObservationDetails(
+                observation = observation,
+                photoRepository = app.container.observationPhotoRepository,
+                onDismiss = {
+                    selectedObservation = null
+                }
+            )
+        }
     }
 }
 
