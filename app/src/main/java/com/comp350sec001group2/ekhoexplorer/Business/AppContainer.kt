@@ -57,6 +57,9 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserPro
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserProfile
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.UpdateUserBioCommand
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.ObservationRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreObservationRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.FirestoreObservationPhotoStore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -155,9 +158,12 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
 
     val photoRepository: PhotoRepository = CachedPhotoRepository(FirestorePhotoStore(service), photoCache)
 
+    val observationPhotoRepository: PhotoRepository = CachedPhotoRepository(FirestoreObservationPhotoStore(service))
     val photoPreparer = PhotoPreparer()
 
     val feedRepository: FeedRepository = FirestoreFeedRepository(service, notificationService, photoRepository)
+
+    val observationRepository: ObservationRepository = FirestoreObservationRepository(service)
 
     val userRelationsRepository: UserRelationsRepository = FirestoreUserRelationsRepository(service)
 
