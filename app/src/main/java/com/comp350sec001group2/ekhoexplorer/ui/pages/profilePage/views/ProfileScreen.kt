@@ -438,53 +438,6 @@ fun ProfileScreenContent(
                     }
                 }
             }
-
-            // Divider between profile information and posts.
-            item(span = { GridItemSpan(3) }) {
-                HorizontalDivider(
-                    color = AppStyle.colors.divider
-                )
-            }
-
-            // Displays posts belonging to the signed-in account.
-            items(
-                items = uiState.posts,
-                key = { post -> post.id }
-            ) { post ->
-                ProfilePostThumbnail(
-                    post = post,
-                    onClick = {
-                        onPostClick(post)
-                    }
-                )
-            }
-
-            if (uiState.isLoadingPosts) {
-                item(span = { GridItemSpan(3) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(AppStyle.dimens.lg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = AppStyle.colors.accent
-                        )
-                    }
-                }
-            }
-
-            uiState.postsErrorMessage?.let { message ->
-                item(span = { GridItemSpan(3) }) {
-                    Text(
-                        text = message,
-                        modifier = Modifier.padding(16.dp),
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
         }
     }
 }
