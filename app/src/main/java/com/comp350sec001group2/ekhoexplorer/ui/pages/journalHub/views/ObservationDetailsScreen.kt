@@ -17,7 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
+import com.comp350sec001group2.ekhoexplorer.ui.theme.Spacing
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -38,7 +38,7 @@ fun ObservationDetailsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(Spacing.lg)) {
         TextButton(onClick = onBack) {
             Text("Back to journal")
         }
@@ -57,7 +57,7 @@ fun ObservationDetailsScreen(
                     Text("This observation is unavailable or has been deleted.")
                 } else {
                     LazyColumn(modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
                         item {
                             Text(
                                 text = entry.title.ifBlank { "Untitled" },
@@ -111,7 +111,7 @@ fun ObservationDetailsScreen(
                             )
 
                             Spacer(
-                                modifier = Modifier.height(8.dp),
+                                modifier = Modifier.height(Spacing.sm),
                             )
 
                             Text(
