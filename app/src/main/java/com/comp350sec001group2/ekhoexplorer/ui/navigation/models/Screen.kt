@@ -10,6 +10,14 @@ sealed class Screen(
         destination = "journal",
         title = "Journal"
     )
+
+    data object ObservationDetails : Screen(
+        destination = "journal/observation/{entryId}",
+        title = "Observation Details"
+    ) {
+        fun createRoute(entryId: String): String =
+            "journal/observation/${android.net.Uri.encode(entryId)}"
+    }
     data object Map : Screen(
         destination = "map",
         title = "Map"

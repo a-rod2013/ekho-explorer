@@ -16,6 +16,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthState
 import com.comp350sec001group2.ekhoexplorer.ui.components.AppHeader
 import com.comp350sec001group2.ekhoexplorer.ui.map.MapScreen
@@ -42,6 +44,8 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.auth.views.ForgotPasswordSc
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UsernameChangeScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UserProfileScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.ObservationDetailsScreen
+
 
 @Composable
 fun AppNavigation(
@@ -175,9 +179,34 @@ private fun AppNavHost(
                 // Field Journal
                 composable(Screen.Journal.destination) {
                     FieldJournalScreen(
+                        onOpenObservation = { entryId ->
+                            navController.navigate(
+                                Screen.ObservationDetails.createRoute(entryId)
+                            )
+                        },
                         onOpenSpecies = {
                             navController.navigate(Screen.Species.destination)
                         }
+                    )
+                }
+
+                composable(
+                    route = Screen.ObservationDetails.destination,
+                    arguments = listOf(
+                        navArgument("entryId") {
+                            type = NavType.StringType
+                        }
+                    ),
+                ) { detailsEntry ->
+                    val entryId = requireNotNull(
+                        detailsEntry.arguments?.getString("entryId")
+                    )
+
+                    ObservationDetailsScreen(
+                        entryId =  entryId,
+                        onBack = {
+                            navController.popBackStack()
+                        },
                     )
                 }
 
