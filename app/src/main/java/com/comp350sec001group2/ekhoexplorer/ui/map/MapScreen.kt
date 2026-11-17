@@ -4,6 +4,12 @@ import android.Manifest
 import com.comp350sec001group2.ekhoexplorer.ui.components.hasAnyLocationPermission
 import com.comp350sec001group2.ekhoexplorer.ui.components.openAppSettings
 import android.util.Log
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import org.maplibre.android.annotations.Icon
+import org.maplibre.android.annotations.IconFactory
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +55,13 @@ import androidx.compose.material3.TextButton
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import android.os.Looper
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import org.maplibre.android.annotations.Marker
 
 
 
@@ -69,6 +82,11 @@ fun MapScreen(modifier: Modifier = Modifier) {
 
     var map by remember {
         mutableStateOf<MapLibreMap?>(null)
+    }
+
+    // Tracks the user's location marker
+    var userLocationMarker by remember {
+        mutableStateOf<Marker?>(null)
     }
 
     // Stores observations added during this session
@@ -256,7 +274,73 @@ fun MapScreen(modifier: Modifier = Modifier) {
             }
         }
     }
-    // Restore saved Journal observations when the Map is ready
+
+    // Track the user's live location
+    DisposableEffect(map, hasLocationPermission, mapStyleReady) {
+        val currentMap = map
+
+        if (currentMap == null || !hasLocationPermission || !mapStyleReady) {
+            onDispose { }
+        } else {
+            val locationClient =
+                LocationServices.getFusedLocationProviderClient(context)
+
+            // Request location updates every 5 seconds
+            val locationRequest = LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                5000L
+            )
+                .setMinUpdateIntervalMillis(3000L)
+                .build()
+
+            // Update the user's marker whenever a new location arrives
+            val locationCallback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    val location = result.lastLocation ?: return
+
+                    val position = LatLng(
+                        location.latitude,
+                        location.longitude
+                    )
+
+                    if (userLocationMarker == null) {
+                        userLocationMarker = currentMap.addMarker(
+                            MarkerOptions()
+                                .position(position)
+                                .title("Your location")
+                                .icon(createUserLocationIcon(context))
+                        )
+                    } else {
+                        userLocationMarker?.position = position
+                    }
+                }
+            }
+
+            try {
+                locationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    Looper.getMainLooper()
+                ).addOnFailureListener { exception ->
+                    Log.e("EkhoMap", "Location tracking failed", exception)
+                }
+            } catch (e: SecurityException) {
+                Log.e("EkhoMap", "Location permission was lost", e)
+            }
+
+            // Stop tracking when leaving the map
+            onDispose {
+                locationClient.removeLocationUpdates(locationCallback)
+
+                userLocationMarker?.let { marker ->
+                    currentMap.removeMarker(marker)
+                }
+
+                userLocationMarker = null
+            }
+        }
+    }
+    // Restore saved Journal and Firestore observations
     LaunchedEffect(activeUser.userId, mapStyleReady) {
 
         if (!mapStyleReady) return@LaunchedEffect
@@ -276,15 +360,49 @@ fun MapScreen(modifier: Modifier = Modifier) {
 
             return@LaunchedEffect
         }
+
+        // Load observations from Firestore
+        val firestoreObservations = try {
+            app.container.observationRepository
+                .getObservations(activeUser.userId)
+                .mapNotNull { saved ->
+
+                    val category = runCatching {
+                        ObservationCategory.valueOf(saved.category)
+                    }.getOrNull() ?: return@mapNotNull null
+
+                    ObservationMarker(
+                        id = saved.id,
+                        commonName = saved.commonName,
+                        scientificName = saved.scientificName,
+                        category = category,
+                        description = saved.description,
+                        photoUri = "",
+                        location = LatLng(
+                            saved.latitude,
+                            saved.longitude
+                        )
+                    )
+                }
+        } catch (e: Exception) {
+            Log.e("MapObservation", "Failed to load Firestore observations", e)
+            emptyList()
+        }
+
+        // Continue observing local Journal entries
         journalRepository.observeDrafts(activeUser.userId)
             .collect { entries ->
 
-                // Reconstruct saved Map observations
-                val restoredObservations = entries.mapNotNull {
+                val localObservations = entries.mapNotNull {
                     it.toObservationMarker()
                 }
 
-                // Replace temporary observations with Room data
+                // Combine local and Firestore observations
+                // Local entries take priority when IDs match
+                val restoredObservations =
+                    (localObservations + firestoreObservations)
+                        .distinctBy { it.id }
+
                 observations.clear()
                 observations.addAll(restoredObservations)
 
@@ -300,12 +418,14 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         map = currentMap,
                         observations = observations,
                         markerObservations = markerObservations,
-                        markerClusters = markerClusters,
+                        markerClusters = markerClusters
                     )
                 }
+
                 Log.d(
-                    "MapJournal",
-                    "Restored ${restoredObservations.size} observations",
+                    "MapObservation",
+                    "Restored ${localObservations.size} local and " +
+                        "${firestoreObservations.size} Firestore observations"
                 )
             }
     }
@@ -350,6 +470,25 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 }
             )
 
+            Button(
+                onClick = {
+                    getObservationLocation(context) { location ->
+                        if (location != null) {
+                            map?.animateCamera(
+                                CameraUpdateFactory.newLatLngZoom(
+                                    location,
+                                    16.0
+                                )
+                            )
+                        } else {
+                            Log.e("EkhoMap", "Could not get current location")
+                        }
+                    }
+                }
+            ) {
+                Text("My Location")
+            }
+
             // Add an observation
             AddMarker(
                 onObservationSaved = {
@@ -357,6 +496,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         scientificName,
                         category,
                         description,
+                        visibility,
                         photoUri ->
 
                     // Get the phone's current GPS location
@@ -389,6 +529,32 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         if (user.isSignedIn) {
                             coroutineScope.launch {
                                 try {
+                                    // Save the observation and photo to Firestore
+                                    try {
+                                        val photos = app.container.photoPreparer.prepare(
+                                            listOf {
+                                                context.contentResolver.openInputStream(photoUri)
+                                                    ?: throw IllegalStateException("Could not open observation photo")
+                                            }
+                                        )
+
+                                        app.container.observationRepository.addObservation(
+                                            observationId = observation.id,
+                                            userId = user.userId,
+                                            commonName = commonName,
+                                            scientificName = scientificName,
+                                            category = category.name,
+                                            description = description,
+                                            visibility = visibility,
+                                            latitude = location.latitude,
+                                            longitude = location.longitude,
+                                            photos = photos
+                                        )
+
+                                        Log.d("MapObservation", "Observation saved to Firestore: ${observation.id}")
+                                    } catch (e: Exception) {
+                                        Log.e("MapObservation", "Failed to save observation to Firestore", e)
+                                    }
                                     // Import the observation photo into Journal storage
                                     val savedPhotoPath = journalPhotoStorage.importPhoto(
                                         ownerId = user.userId,
@@ -483,9 +649,39 @@ fun MapScreen(modifier: Modifier = Modifier) {
     selectedObservation?.let { observation ->
         ObservationDetails(
             observation = observation,
+            photoRepository = app.container.observationPhotoRepository,
             onDismiss = {
                 selectedObservation = null
             }
         )
     }
+}
+
+// Creates the red icon for the user's location
+private fun createUserLocationIcon(context: android.content.Context): Icon {
+    val size = 64
+
+    val bitmap = Bitmap.createBitmap(
+        size,
+        size,
+        Bitmap.Config.ARGB_8888
+    )
+
+    val canvas = Canvas(bitmap)
+
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+
+    // Light red outer circle
+    paint.color = Color.argb(65, 244, 67, 54)
+    canvas.drawCircle(32f, 32f, 30f, paint)
+
+    // White border
+    paint.color = Color.WHITE
+    canvas.drawCircle(32f, 32f, 19f, paint)
+
+    // Red center
+    paint.color = Color.RED
+    canvas.drawCircle(32f, 32f, 14f, paint)
+
+    return IconFactory.getInstance(context).fromBitmap(bitmap)
 }

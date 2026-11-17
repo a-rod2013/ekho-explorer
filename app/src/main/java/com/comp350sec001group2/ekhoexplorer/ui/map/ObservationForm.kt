@@ -27,7 +27,8 @@ fun ObservationForm(
         commonName: String,
         scientificName: String,
         category: ObservationCategory,
-        description: String
+        description: String,
+        visibility: String
     ) -> Unit,
     onCancel: () -> Unit
 ) {
@@ -38,6 +39,11 @@ fun ObservationForm(
     var description by rememberSaveable { mutableStateOf("") }
     var category by rememberSaveable {
         mutableStateOf(ObservationCategory.PLANT)
+    }
+
+    // Controls who can see the observation
+    var visibility by rememberSaveable {
+        mutableStateOf("PRIVATE")
     }
 
     // Load the captured observation photo
@@ -134,6 +140,32 @@ fun ObservationForm(
                 }
         }
 
+        // Visibility selection
+        Text(
+            text = "Who can see this observation?",
+            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.labelMedium
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            FilterChip(
+                selected = visibility == "PRIVATE",
+                onClick = { visibility = "PRIVATE" },
+                label = { Text("Private") },
+                modifier = Modifier.weight(1f)
+            )
+
+            FilterChip(
+                selected = visibility == "PUBLIC",
+                onClick = { visibility = "PUBLIC" },
+                label = { Text("Public") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
         // Description
         Text(
             text = "Description",
@@ -168,7 +200,8 @@ fun ObservationForm(
                         commonName.trim(),
                         scientificName.trim(),
                         category,
-                        description.trim()
+                        description.trim(),
+                        visibility
                     )
                 }
             ) {
