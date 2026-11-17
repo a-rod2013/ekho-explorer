@@ -165,6 +165,137 @@ service cloud.firestore {
       }
     }
 
+    // Observations
+
+        match /observations/{observationId} {
+
+          // Owners can always read their own observations.
+          // Other signed-in users can read public observations.
+          allow read: if signedIn()
+            && (
+              resource.data.userId == request.auth.uid
+              || resource.data.visibility == 'PUBLIC'
+            );
+
+          // Only the owner can create an observation.
+          allow create: if signedIn()
+            && request.resource.data.keys().hasAll([
+              'userId',
+              'commonName',
+              'scientificName',
+              'category',
+              'description',
+              'latitude',
+              'longitude',
+              'photoCount',
+              'visibility',
+              'createdAt'
+            ])
+            && request.resource.data.keys().hasOnly([
+              'userId',
+              'commonName',
+              'scientificName',
+              'category',
+              'description',
+              'latitude',
+              'longitude',
+              'photoCount',
+              'visibility',
+              'createdAt'
+            ])
+            && request.resource.data.userId == request.auth.uid
+            && request.resource.data.commonName is string
+            && request.resource.data.commonName.size() <= 100
+            && request.resource.data.scientificName is string
+            && request.resource.data.scientificName.size() <= 150
+            && request.resource.data.category in [
+              'PLANT',
+              'ANIMAL',
+              'INSECT',
+              'FUNGI'
+            ]
+            && request.resource.data.description is string
+            && request.resource.data.description.size() <= 2000
+            && request.resource.data.latitude is number
+            && request.resource.data.latitude >= -90
+            && request.resource.data.latitude <= 90
+            && request.resource.data.longitude is number
+            && request.resource.data.longitude >= -180
+            && request.resource.data.longitude <= 180
+            && request.resource.data.photoCount is int
+            && request.resource.data.photoCount >= 1
+            && request.resource.data.photoCount <= 5
+            && request.resource.data.visibility in ['PRIVATE', 'PUBLIC']
+            && request.resource.data.createdAt == request.time;
+
+         // Owners can edit observation details and visibility.
+         allow update: if signedIn()
+           && resource.data.userId == request.auth.uid
+           && request.resource.data.userId == resource.data.userId
+           && request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly([
+                 'commonName',
+                 'scientificName',
+                 'category',
+                 'description',
+                 'visibility'
+               ])
+           && request.resource.data.commonName is string
+           && request.resource.data.scientificName is string
+           && request.resource.data.category in [
+             'PLANT',
+             'ANIMAL',
+             'INSECT',
+             'FUNGI'
+           ]
+           && request.resource.data.description is string
+           && request.resource.data.visibility in ['PRIVATE', 'PUBLIC'];
+
+          // Observation photos
+          match /photos/{position} {
+
+            // Photos follow the visibility of their observation.
+            allow read: if signedIn()
+              && (
+                get(
+                  /databases/$(database)/documents/observations/$(observationId)
+                ).data.userId == request.auth.uid
+                || get(
+                  /databases/$(database)/documents/observations/$(observationId)
+                ).data.visibility == 'PUBLIC'
+              );
+
+            allow create: if signedIn()
+              && position in ['0', '1', '2', '3', '4']
+              && getAfter(
+                /databases/$(database)/documents/observations/$(observationId)
+              ).data.userId == request.auth.uid
+              && request.resource.data.keys().hasAll([
+                'data',
+                'width',
+                'height'
+              ])
+              && request.resource.data.keys().hasOnly([
+                'data',
+                'width',
+                'height'
+              ])
+              && request.resource.data.data is bytes
+              && request.resource.data.data.size() > 0
+              && request.resource.data.data.size() <= 100000
+              && request.resource.data.width is int
+              && request.resource.data.width > 0
+              && request.resource.data.width <= 2048
+              && request.resource.data.height is int
+              && request.resource.data.height > 0
+              && request.resource.data.height <= 2048;
+
+            // Photo replacement and deletion are disabled for now.
+            allow update, delete: if false;
+          }
+        }
+
+
     // votes/{postId}_{userId}
 
     match /votes/{voteId} {
