@@ -141,12 +141,24 @@ fun ObservationActionButton(
 
                     ObservationForm(
                         photoUri = Uri.parse(photo),
+                        showVisibility = !publishToFeed,
+                        saveButtonText = if (publishToFeed) {
+                            "Post observation"
+                        } else {
+                            "Save Observation"
+                        },
                         onSave = {
                                 commonName,
                                 scientificName,
                                 category,
                                 description,
-                                visibility ->
+                                selectedVisibility ->
+
+                            val visibility = if (publishToFeed) {
+                                "PUBLIC"
+                            } else {
+                                selectedVisibility
+                            }
 
                             val user = EhkoCache.activeUser
                             val entryId = draftId
