@@ -446,16 +446,7 @@ fun MapScreen(
                 expandedCluster = null
                 selectedObservation = null
 
-                // Refresh the markers on the Map
-                map?.let { currentMap ->
-                    displayClusters(
-                        context = context,
-                        map = currentMap,
-                        observations = filteredObservations,
-                        markerObservations = markerObservations,
-                        markerClusters = markerClusters
-                    )
-                }
+
 
                 Log.d(
                     "MapObservation",
@@ -576,17 +567,9 @@ fun MapScreen(
             verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
         ) {
 
-            // Trail drawing controls
-            DrawTrail(
-                mapView = mapView,
-                map = map,
-                onTrailFinished = { points ->
-                    Log.d(
-                        "DrawTrail",
-                        "Trail finished with ${points.size} points"
-                    )
-                }
-            )
+
+
+
 
             // Add an observation
             AddMarker(
@@ -701,28 +684,7 @@ fun MapScreen(
                             )
                         }
 
-                        // Refresh the map markers after saving
-                        map?.let { currentMap ->
 
-                            // Remove any expanded markers
-                            collapseCluster(
-                                map = currentMap,
-                                expandedMarkers = expandedMarkers,
-                                markerObservations = markerObservations
-                            )
-
-                            expandedMarkers.clear()
-                            expandedCluster = null
-
-                            // Refresh observation clusters
-                            displayClusters(
-                                context = context,
-                                map = currentMap,
-                                observations = filteredObservations,
-                                markerObservations = markerObservations,
-                                markerClusters = markerClusters
-                            )
-                        }
 
                         // Move the camera to the observation
                         map?.animateCamera(
@@ -780,6 +742,7 @@ fun MapScreen(
         }
     }
 }
+
 
 // Creates the red icon for the user's location
 private fun createUserLocationIcon(context: android.content.Context): Icon {

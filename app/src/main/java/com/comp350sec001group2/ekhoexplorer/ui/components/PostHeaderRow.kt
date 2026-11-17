@@ -33,12 +33,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.coroutines.cancellation.CancellationException
 
+import androidx.compose.foundation.clickable
+
 @Composable
 fun PostHeaderRow(
     avatarUrl: String?,
     username: String,
     modifier: Modifier = Modifier,
     userId: String = "",
+    onUserClick: ((userId: String) -> Unit)? = null,
     trailing: @Composable () -> Unit = {},
 ) {
     val d = AppStyle.dimens
@@ -78,6 +81,12 @@ fun PostHeaderRow(
         }
     }
 
+    val userClickableModifier = if (onUserClick != null && userId.isNotBlank()) {
+        Modifier.clickable { onUserClick(userId) }
+    } else {
+        Modifier
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -88,51 +97,57 @@ fun PostHeaderRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(d.md)
     ) {
-
-        // Display a saved avatar, legacy image, or default silhouette.
-        Box(
+        Row(
             modifier = Modifier
-                .size(d.avatar)
-                .clip(CircleShape)
-                .background(AppStyle.colors.surface),
-            contentAlignment = Alignment.Center
+                .weight(1f)
+                .then(userClickableModifier),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(d.md)
         ) {
-            when {
-                avatarBitmap != null -> {
-                    Image(
-                        bitmap = avatarBitmap!!.asImageBitmap(),
-                        contentDescription = "Profile picture of $username",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+            // Display a saved avatar, legacy image, or default silhouette.
+            Box(
+                modifier = Modifier
+                    .size(d.avatar)
+                    .clip(CircleShape)
+                    .background(AppStyle.colors.surface),
+                contentAlignment = Alignment.Center
+            ) {
+                when {
+                    avatarBitmap != null -> {
+                        Image(
+                            bitmap = avatarBitmap!!.asImageBitmap(),
+                            contentDescription = "Profile picture of $username",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
-                userId.isBlank() && !avatarUrl.isNullOrBlank() -> {
-                    AsyncImage(
-                        model = avatarUrl,
-                        contentDescription = "Profile picture of $username",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                    userId.isBlank() && !avatarUrl.isNullOrBlank() -> {
+                        AsyncImage(
+                            model = avatarUrl,
+                            contentDescription = "Profile picture of $username",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
-                else -> {
-                    Icon(
-                        imageVector = Icons.Default.AccountCircle,
-                        contentDescription = "Default profile picture",
-                        modifier = Modifier.fillMaxSize(),
-                        tint = AppStyle.colors.textSecondary
-                    )
+                    else -> {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Default profile picture",
+                            modifier = Modifier.fillMaxSize(),
+                            tint = AppStyle.colors.textSecondary
+                        )
+                    }
                 }
             }
-        }
 
-        Text(
-            text = username,
-            style = AppStyle.type.username,
-            color = AppStyle.colors.textPrimary,
-            modifier = Modifier.weight(1f)
-        )
+            Text(
+                text = username,
+                style = AppStyle.type.username,
+                color = AppStyle.colors.textPrimary
+            )
+        }
         trailing()
     }
 }
