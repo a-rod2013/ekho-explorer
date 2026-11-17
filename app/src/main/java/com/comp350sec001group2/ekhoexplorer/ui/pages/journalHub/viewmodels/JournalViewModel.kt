@@ -18,25 +18,107 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.WhileSubscribed
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class JournalViewModel(
     private val repository: JournalRepository
 ) : ViewModel() {
+
+    // Holds the text currently entered in the search field.
+    private val _searchQuery = MutableStateFlow("")
+
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    // Allows the interface to observe the query without changing it directly
     val entries: StateFlow<List<JournalDraft>> =
-        EhkoCache.activeUserFlow
-            .flatMapLatest { user ->
-                if (user.isSignedIn) {
-                    repository.observeDrafts(user.userId)
-                } else {
-                    flowOf(emptyList())
+        EhkoCache.activeUserFlow.flatMapLatest { user ->
+            if (user.isSignedIn) {
+                repository.observeDrafts(user.userId)
+            } else {
+                flowOf(emptyList())
+            }
+        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = emptyList(),
+            )
+
+    // Recalculates matches whenever the entries or query change
+    val filteredEntries: StateFlow<List<JournalDraft>> =
+        combine(entries, searchQuery) { allEntries, query ->
+
+            // Splits input into keywords, ignores extra spaces.
+            val keywords = query.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+
+            if (keywords.isEmpty()) {
+                allEntries
+            } else {
+                allEntries.filter { entry ->
+
+                    // Every keyword must appear in the title or notes.
+                    keywords.all { keyword ->
+                        entry.title.contains(
+                            other = keyword,
+                            ignoreCase = true,
+                        ) || entry.notes.contains(
+                            other = keyword,
+                            ignoreCase = true,
+                        )
+                    }
                 }
             }
-            .stateIn(
-                viewModelScope,
-                SharingStarted.WhileSubscribed(5_000),
-                emptyList()
-            )
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList(),
+        )
+
+    // Suggests existing observation titles beginning with the query.
+    val prefixSuggestions: StateFlow<List<String>> =
+        combine(entries, searchQuery) { allEntries, query ->
+            val prefix = query.trim()
+
+            if (prefix.length < 2) {
+                emptyList<String>()
+            } else {
+                allEntries
+                    .flatMap { entry ->
+                        val noteKeywords = entry.notes
+                            .split(Regex("[^\\p{L}\\p{N}]+"))
+                            .filter { it.length >= 2 }
+
+                        listOf(entry.title.trim()) + noteKeywords
+                    }
+                    .filter { suggestion ->
+                        suggestion.isNotBlank() &&
+                            suggestion.startsWith(
+                                prefix = prefix,
+                                ignoreCase = true,
+                            ) && !suggestion.equals(
+                                other = prefix,
+                                ignoreCase = true,
+                            )
+                    }
+                    .distinctBy { it.lowercase() }
+                    .sortedBy { it.lowercase()  }
+                    .take(5)
+            }
+        }.stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList(),
+        )
+
+    // Called when the user types or whe search is cleared
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
 }
 val journalViewModelFactory = viewModelFactory {
     initializer {

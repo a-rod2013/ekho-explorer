@@ -161,28 +161,24 @@ fun AppHeader(
             }
         }
         IconButton(onClick = onSearchClick) {
-            Icon(
-                imageVector = if (
-                    pageTitle == "Field Journal" ||
+            val showFilterIcon =
+                !isJournal && (
                     pageTitle == "Map" ||
                     pageTitle == "Activity" ||
                     pageTitle == "Feed"
-                ) {
+                    )
+            Icon(
+                imageVector = if (showFilterIcon) {
                     Icons.Filled.Tune
                 } else {
                     Icons.Filled.Search
                 },
-                contentDescription = if (
-                    pageTitle == "Field Journal" ||
-                    pageTitle == "Map" ||
-                    pageTitle == "Activity" ||
-                    pageTitle == "Feed"
-                ) {
+                contentDescription = if (showFilterIcon) {
                     "Filter this page"
                 } else {
                     "Search this page"
                 },
-                tint = AppStyle.colors.textPrimary
+                tint = AppStyle.colors.textPrimary,
             )
         }
     }
