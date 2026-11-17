@@ -67,6 +67,8 @@ private fun AppNavHost(
     val navController = rememberNavController()
 
     var showSpeciesSearch by remember { mutableStateOf(false) }
+    var showMapSearch by remember { mutableStateOf(false) }
+    var showMapFilters by remember { mutableStateOf(false) }
 
     // Temporary authentication navigation
     val startRoute = remember {
@@ -112,6 +114,14 @@ private fun AppNavHost(
                         if (currentDestination == Screen.Species.destination) {
                             showSpeciesSearch = !showSpeciesSearch
                         }
+                    },
+                    onMapSearchClick = {
+                        showMapSearch = !showMapSearch
+                        showMapFilters = false
+                    },
+                    onMapFilterClick = {
+                        showMapFilters = !showMapFilters
+                        showMapSearch = false
                     },
                     isJournal = currentDestination == Screen.Journal.destination,
                     isFeed = currentDestination == Screen.Feed.destination,
@@ -183,7 +193,10 @@ private fun AppNavHost(
 
                 // Map
                 composable(Screen.Map.destination) {
-                    MapScreen()
+                    MapScreen(
+                        showSearch = showMapSearch,
+                        showFilters = showMapFilters
+                    )
                 }
 
                 // Activity

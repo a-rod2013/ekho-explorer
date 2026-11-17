@@ -15,7 +15,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
@@ -67,7 +73,11 @@ import org.maplibre.android.annotations.Marker
 
 
 @Composable
-fun MapScreen(modifier: Modifier = Modifier) {
+fun MapScreen(
+    modifier: Modifier = Modifier,
+    showSearch: Boolean = false,
+    showFilters: Boolean = false
+) {
     val context = LocalContext.current
     val app = context.applicationContext as EkhoApp
     val journalRepository = app.container.journalRepository
@@ -92,6 +102,27 @@ fun MapScreen(modifier: Modifier = Modifier) {
     // Stores observations added during this session
     val observations = remember {
         mutableStateListOf<ObservationMarker>()
+    }
+
+    // Stores the map search text
+    var searchQuery by remember {
+        mutableStateOf("")
+    }
+
+// Stores the selected observation categories
+    var selectedCategories by remember {
+        mutableStateOf(ObservationCategory.values().toSet())
+    }
+
+// Observations that match the current search and category filters
+    val filteredObservations = observations.filter { observation ->
+        val matchesSearch =
+            observation.commonName.contains(searchQuery, ignoreCase = true) ||
+                observation.scientificName.contains(searchQuery, ignoreCase = true)
+
+        val matchesCategory = observation.category in selectedCategories
+
+        matchesSearch && matchesCategory
     }
 
     // Tracks which observation the user selects
@@ -352,7 +383,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                 displayClusters(
                     context = context,
                     map = currentMap,
-                    observations = observations,
+                    observations = filteredObservations,
                     markerObservations = markerObservations,
                     markerClusters = markerClusters
                 )
@@ -416,7 +447,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                     displayClusters(
                         context = context,
                         map = currentMap,
-                        observations = observations,
+                        observations = filteredObservations,
                         markerObservations = markerObservations,
                         markerClusters = markerClusters
                     )
@@ -428,6 +459,32 @@ fun MapScreen(modifier: Modifier = Modifier) {
                         "${firestoreObservations.size} Firestore observations"
                 )
             }
+    }
+
+    // Refresh map markers when search or filters change
+    LaunchedEffect(filteredObservations, mapStyleReady) {
+        if (!mapStyleReady) return@LaunchedEffect
+
+        map?.let { currentMap ->
+            // Remove any expanded cluster markers
+            collapseCluster(
+                map = currentMap,
+                expandedMarkers = expandedMarkers,
+                markerObservations = markerObservations
+            )
+
+            expandedMarkers.clear()
+            expandedCluster = null
+
+            // Display only matching observations
+            displayClusters(
+                context = context,
+                map = currentMap,
+                observations = filteredObservations,
+                markerObservations = markerObservations,
+                markerClusters = markerClusters
+            )
+        }
     }
     // Manage the MapView lifecycle
     DisposableEffect(mapView) {
@@ -449,6 +506,63 @@ fun MapScreen(modifier: Modifier = Modifier) {
             factory = { mapView },
             modifier = Modifier.fillMaxSize()
         )
+
+        // Observation search panel
+        if (showSearch) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("Search observations") },
+                placeholder = { Text("Common or scientific name") },
+                singleLine = true,
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth(0.85f)
+                    .padding(top = AppStyle.dimens.lg)
+            )
+        }
+
+        // Observation category filter panel
+        if (showFilters) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth(0.85f)
+                    .padding(top = AppStyle.dimens.lg)
+            ) {
+                Column(
+                    modifier = Modifier.padding(AppStyle.dimens.lg)
+                ) {
+                    Text("Filter by category")
+
+                    ObservationCategory.values().forEach { category ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(
+                                checked = category in selectedCategories,
+                                onCheckedChange = { checked ->
+                                    selectedCategories = if (checked) {
+                                        selectedCategories + category
+                                    } else {
+                                        selectedCategories - category
+                                    }
+                                }
+                            )
+
+                            Text(
+                                when (category) {
+                                    ObservationCategory.PLANT -> "Plants"
+                                    ObservationCategory.ANIMAL -> "Animals"
+                                    ObservationCategory.INSECT -> "Insects"
+                                    ObservationCategory.FUNGI -> "Fungi"
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+        }
 
         // Map controls
         Column(
@@ -619,7 +733,7 @@ fun MapScreen(modifier: Modifier = Modifier) {
                             displayClusters(
                                 context = context,
                                 map = currentMap,
-                                observations = observations,
+                                observations = filteredObservations,
                                 markerObservations = markerObservations,
                                 markerClusters = markerClusters
                             )

@@ -32,6 +32,8 @@ fun AppHeader(
     onNotificationsClick: () -> Unit,
     onSignOut: () -> Unit,
     onSearchClick: () -> Unit,
+    onMapSearchClick: () -> Unit,
+    onMapFilterClick: () -> Unit,
     modifier: Modifier = Modifier,
     isJournal: Boolean = false,
     isFeed: Boolean = false,
@@ -65,12 +67,22 @@ fun AppHeader(
                     pageTitle == "Map" ||
                     pageTitle == "Activity" ||
                     pageTitle == "Feed") {
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = "Open navigation menu",
-                            tint = AppStyle.colors.textPrimary
-                        )
+                    if (pageTitle == "Map") {
+                        IconButton(onClick = onMapFilterClick) {
+                            Icon(
+                                imageVector = Icons.Filled.Tune,
+                                contentDescription = "Filter observations",
+                                tint = AppStyle.colors.textPrimary
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = "Open navigation menu",
+                                tint = AppStyle.colors.textPrimary
+                            )
+                        }
                     }
                     DropdownMenu(
                         expanded = menuExpanded && (isJournal || isFeed),
@@ -160,30 +172,38 @@ fun AppHeader(
 
             }
         }
-        IconButton(onClick = onSearchClick) {
-            Icon(
-                imageVector = if (
-                    pageTitle == "Field Journal" ||
-                    pageTitle == "Map" ||
-                    pageTitle == "Activity" ||
-                    pageTitle == "Feed"
-                ) {
-                    Icons.Filled.Tune
-                } else {
-                    Icons.Filled.Search
-                },
-                contentDescription = if (
-                    pageTitle == "Field Journal" ||
-                    pageTitle == "Map" ||
-                    pageTitle == "Activity" ||
-                    pageTitle == "Feed"
-                ) {
-                    "Filter this page"
-                } else {
-                    "Search this page"
-                },
-                tint = AppStyle.colors.textPrimary
-            )
+        if (pageTitle == "Map") {
+            IconButton(onClick = onMapSearchClick) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search observations",
+                    tint = AppStyle.colors.textPrimary
+                )
+            }
+        } else {
+            IconButton(onClick = onSearchClick) {
+                Icon(
+                    imageVector = if (
+                        pageTitle == "Field Journal" ||
+                        pageTitle == "Activity" ||
+                        pageTitle == "Feed"
+                    ) {
+                        Icons.Filled.Tune
+                    } else {
+                        Icons.Filled.Search
+                    },
+                    contentDescription = if (
+                        pageTitle == "Field Journal" ||
+                        pageTitle == "Activity" ||
+                        pageTitle == "Feed"
+                    ) {
+                        "Filter this page"
+                    } else {
+                        "Search this page"
+                    },
+                    tint = AppStyle.colors.textPrimary
+                )
+            }
         }
     }
 }
