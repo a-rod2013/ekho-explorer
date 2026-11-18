@@ -53,22 +53,26 @@ class JournalViewModel(
         combine(entries, searchQuery) { allEntries, query ->
 
             // Splits input into keywords, ignores extra spaces.
-            val keywords = query.trim().split(Regex("\\s+")).filter { it.isNotBlank() }
+            val keywords = query.trim()
+                .split(Regex("\\s+"))
+                .filter { it.isNotBlank() }
 
             if (keywords.isEmpty()) {
                 allEntries
             } else {
                 allEntries.filter { entry ->
+                    val words = searchWords("${entry.title} ${entry.notes}")
 
                     // Every keyword must appear in the title or notes.
                     keywords.all { keyword ->
-                        entry.title.contains(
-                            other = keyword,
-                            ignoreCase = true,
-                        ) || entry.notes.contains(
-                            other = keyword,
-                            ignoreCase = true,
-                        )
+                        entry.title.contains(keyword, ignoreCase = true) ||
+                            entry.notes.contains(other = keyword, ignoreCase = true) ||
+                            (
+                                keyword.length >= 4 &&
+                                    words.any { word ->
+                                        isWithinOneEdit(keyword, word)
+                                    }
+                                )
                     }
                 }
             }
@@ -88,24 +92,24 @@ class JournalViewModel(
             } else {
                 allEntries
                     .flatMap { entry ->
-                        val noteKeywords = entry.notes
-                            .split(Regex("[^\\p{L}\\p{N}]+"))
-                            .filter { it.length >= 2 }
-
-                        listOf(entry.title.trim()) + noteKeywords
+                        listOf(entry.title.trim()) +
+                            searchWords(entry.title) +
+                            searchWords(entry.notes)
                     }
                     .filter { suggestion ->
-                        suggestion.isNotBlank() &&
-                            suggestion.startsWith(
-                                prefix = prefix,
-                                ignoreCase = true,
-                            ) && !suggestion.equals(
-                                other = prefix,
-                                ignoreCase = true,
-                            )
+                        val isDifferent = !suggestion.equals(prefix, ignoreCase = true)
+                        val matchesPrefix = suggestion.startsWith(prefix, ignoreCase = true)
+                        val matchesTypo = prefix.length >= 4 && isWithinOneEdit(prefix, suggestion)
+                        suggestion.isNotBlank() && isDifferent && (matchesPrefix || matchesTypo)
                     }
-                    .distinctBy { it.lowercase() }
-                    .sortedBy { it.lowercase()  }
+                    .distinctBy { it.lowercase(java.util.Locale.ROOT) }
+                    .sortedWith(
+                        compareBy<String> {
+                            if (it.startsWith(prefix, ignoreCase = true)) 0 else 1
+                        }.thenBy {
+                            it.lowercase(java.util.Locale.ROOT)
+                        }
+                    )
                     .take(5)
             }
         }.stateIn(
@@ -117,6 +121,52 @@ class JournalViewModel(
     // Called when the user types or whe search is cleared
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
+    }
+    //Extracts searchable words from titles and notes.
+    private fun searchWords(text: String): List<String> =
+        text.split(Regex("[^\\p{L}\\p{N}]+"))
+            .filter { it.length >= 2 }
+
+    // Accepts one insertion, deletion, replacement or adjacent swap.
+    private fun isWithinOneEdit(first: String, second: String): Boolean {
+        val a = first.lowercase(java.util.Locale.ROOT)
+        val b = second.lowercase(java.util.Locale.ROOT)
+
+        if (a == b) return true
+        if (kotlin.math.abs(a.length - b.length) > 1) return false
+
+        if (a.length == b.length) {
+            val mismatches = a.indices.filter { a[it] != b[it] }
+
+            if (mismatches.size == 1) return true
+            if (mismatches.size != 2) return false
+
+            val left = mismatches[0]
+            val right = mismatches[1]
+
+            return right == left + 1 &&
+                a[left] == b[right] &&
+                a[right] == b[left]
+        }
+
+        val shorter = if (a.length < b.length) a else b
+        val longer = if (a.length < b.length) b else a
+        var shortIndex = 0
+        var longIndex = 0
+        var skippedCharacter = false
+
+        while (shortIndex < shorter.length && longIndex < longer.length) {
+            if (shorter[shortIndex] == longer[longIndex]) {
+                shortIndex++
+                longIndex++
+            } else {
+                if (skippedCharacter) return false
+                skippedCharacter = true
+                longIndex++
+            }
+        }
+
+        return true
     }
 
 }
