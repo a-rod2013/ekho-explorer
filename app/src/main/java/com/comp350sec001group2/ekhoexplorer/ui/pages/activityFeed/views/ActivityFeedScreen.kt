@@ -38,6 +38,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.Fee
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.feedViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
+import com.comp350sec001group2.ekhoexplorer.ui.components.ObservationActionButton
 
 @Composable
 fun FeedScreen(
@@ -68,6 +69,12 @@ fun FeedScreen(
             onOpenNotifications = onOpenNotifications,
             onSignOut = onSignOut,
             onUserClick = onUserClick,
+            actionButton = {
+                ObservationActionButton(
+                    publishToFeed = true,
+                    onSaved = { viewModel.onRefresh() }
+                )
+            },
         )
     }
 
@@ -95,6 +102,7 @@ fun FeedScreenContent(
     onSignOut: (() -> Unit)? = null,
     onNewPost: (() -> Unit)? = null,
     onUserClick: (userId: String) -> Unit = {},
+    actionButton: @Composable () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState.error) {
@@ -107,13 +115,7 @@ fun FeedScreenContent(
         // The header and bottom bar apply their own system-bar insets.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            if (onNewPost != null) {
-                FloatingActionButton(onClick = onNewPost) {
-                    Icon(Icons.Filled.Add, contentDescription = "New post")
-                }
-            }
-        },
+        floatingActionButton = actionButton,
 
 
         // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
