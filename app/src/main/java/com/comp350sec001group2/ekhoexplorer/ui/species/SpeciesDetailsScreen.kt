@@ -10,12 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -79,23 +75,6 @@ fun SpeciesDetailsScreen(
             .fillMaxSize()
             .padding(horizontal = AppStyle.dimens.md)
     ) {
-        androidx.compose.foundation.layout.Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onBack) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    tint = AppStyle.colors.textPrimary
-                )
-            }
-
-            Text(
-                text = "Species Details",
-                style = MaterialTheme.typography.titleMedium,
-                color = AppStyle.colors.textPrimary
-            )
-        }
 
         when {
             isLoading -> {

@@ -42,9 +42,9 @@ fun AppBottomBar(
     // add navigation tabs using screens defined in Screen.kt
     val items = listOf(
         Screen.Journal to Icons.Filled.Book,
+        Screen.Feed to Icons.Filled.Forum,
         Screen.Map to Icons.Filled.Explore,
         Screen.Activity to Icons.Filled.Hiking,
-        Screen.Feed to Icons.Filled.Forum,
         Screen.Profile to Icons.Filled.Person
     )
 

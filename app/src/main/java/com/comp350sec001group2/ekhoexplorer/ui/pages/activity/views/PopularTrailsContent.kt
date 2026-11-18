@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,7 +21,6 @@ import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 @Composable
 fun PopularTrailsContent(
     viewModel: TrailListViewModel,
-    onViewTrails: () -> Unit,
     onOpenTrail: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -46,7 +44,7 @@ fun PopularTrailsContent(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = d.lg, vertical = d.xs).testTag("trail-error"),
             )
         }
-        state.popular.forEach { trail ->
+        state.popular.take(3).forEach { trail ->
             TrailCard(
                 trail = trail,
                 distanceMeters = state.distances[trail.id],
@@ -56,9 +54,5 @@ fun PopularTrailsContent(
                 onRequestVerification = { viewModel.onRequestVerification(trail.id) },
             )
         }
-        Button(
-            onClick = onViewTrails,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = d.lg, vertical = d.md).testTag("view-trails"),
-        ) { Text("View trails") }
     }
 }

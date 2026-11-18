@@ -30,8 +30,8 @@ fun ActivityScreen(
     modifier: Modifier = Modifier,
     viewModel: TrailListViewModel = viewModel(factory = trailListViewModelFactory),
     sections: List<ActivitySection> = listOf(
-        ActivitySection(id = "trails", title = "Trails") {
-            PopularTrailsContent(viewModel = viewModel, onViewTrails = onViewTrails, onOpenTrail = onOpenTrail)
+        ActivitySection(id = "trails", title = "Top 3 Trails") {
+            PopularTrailsContent(viewModel = viewModel, onOpenTrail = onOpenTrail)
         },
     ),
 ) {
@@ -46,12 +46,6 @@ fun ActivityScreen(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-                    Text(
-                        text = "Activities",
-                        style = AppStyle.type.username,
-                        color = AppStyle.colors.textPrimary,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = d.lg, vertical = d.sm).testTag("activity-title"),
-                    )
                     sections.forEach { section ->
                         Text(
                             text = section.title,

@@ -260,13 +260,13 @@ fun ObservationActionButton(
                                                         id = entryId,
                                                         ownerId = user.userId,
                                                         title = commonName,
-                                                        notes = """
-                                                            Scientific name: $scientificName
-                                                            Category: $category
-                                                            Description: $description
-                                                            Visibility: $visibility
-                                                            Location: ${location.latitude}, ${location.longitude}
-                                                        """.trimIndent(),
+                                                        notes = buildString {
+                                                            appendLine("Scientific name: $scientificName")
+                                                            appendLine("Category: $category")
+                                                            appendLine("Description: $description")
+                                                            appendLine("Visibility: $visibility")
+                                                            appendLine("Location: ${location.latitude}, ${location.longitude}")
+                                                        }.trimEnd(),
                                                         photoPaths = listOf(savedPath),
                                                         createdAtMillis = timestamp,
                                                         updatedAtMillis = timestamp

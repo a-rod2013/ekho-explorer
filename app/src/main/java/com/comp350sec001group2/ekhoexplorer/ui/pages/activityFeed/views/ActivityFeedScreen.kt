@@ -5,11 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -30,7 +26,6 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
 import com.comp350sec001group2.ekhoexplorer.ui.components.EmptyState
-import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
 import com.comp350sec001group2.ekhoexplorer.ui.components.LocalPhotoLoader
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
@@ -120,19 +115,6 @@ fun FeedScreenContent(
 
         // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
         // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
-
-        // Same header with the search field left out (see above) and the notification bell added.
-        topBar = {
-            FeedHeader(
-                query = uiState.query,
-                onQueryChange = onQueryChange,
-                onSearch = onSearch,
-                showSearch = false,
-                onBellClick = onOpenNotifications,
-                unreadNotifications = unreadNotifications,
-                username = uiState.currentUserName,
-            )
-        },
 
     ) { padding ->
         PullToRefreshBox(
