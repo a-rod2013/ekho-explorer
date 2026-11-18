@@ -49,7 +49,7 @@ fun FieldJournalScreen(
                 value = searchQuery,
                 onValueChange = viewModel::updateSearchQuery,
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text("Search Observations") },
+                label = { Text("Search observations") },
                 singleLine = true,
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {

@@ -30,14 +30,6 @@ fun AllTrailsScreen(
     val d = AppStyle.dimens
     CompositionLocalProvider(LocalTrailPhotoLoader provides viewModel.photos) {
         Column(modifier = modifier.fillMaxSize().background(AppStyle.colors.background)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = d.lg, vertical = d.xs),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(d.sm),
-            ) {
-                Text("Trails", style = AppStyle.type.username, color = AppStyle.colors.textPrimary, modifier = Modifier.weight(1f))
-                Button(onClick = onCreateTrail, modifier = Modifier.testTag("create-trail")) { Text("Create a trail") }
-            }
             TrailsSectionContent(viewModel = viewModel, onOpenTrail = onOpenTrail)
         }
     }

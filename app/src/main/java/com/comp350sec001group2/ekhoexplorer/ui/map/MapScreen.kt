@@ -650,12 +650,12 @@ fun MapScreen(
                                         id = observation.id,
                                         ownerId = user.userId,
                                         title = commonName,
-                                        notes = """
-                                            Scientific name: $scientificName
-                                            Category: $category
-                                            Description: $description
-                                            Location: ${location.latitude}, ${location.longitude}
-                                        """.trimIndent(),
+                                        notes = buildString {
+                                            appendLine("Scientific name: $scientificName")
+                                            appendLine("Category: $category")
+                                            appendLine("Description: $description")
+                                            appendLine("Location: ${location.latitude}, ${location.longitude}")
+                                        }.trimEnd(),
                                         photoPaths = listOf(savedPhotoPath),
                                         createdAtMillis = timestamp,
                                         updatedAtMillis = timestamp

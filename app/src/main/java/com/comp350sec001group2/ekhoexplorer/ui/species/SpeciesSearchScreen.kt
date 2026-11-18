@@ -90,28 +90,44 @@ fun SpeciesSearchScreen(
 
     val apiService = remember { SpeciesApiService() }
 
-    LaunchedEffect(searchText, selectedCategory) {
-        speciesResults = emptyList()
-        errorMessage = null
-        isLoading = false
 
-        if (searchText.isBlank() && selectedCategory == "All") {
+    LaunchedEffect(searchText, selectedCategory) {
+        val query = searchText.trim()
+
+        // Wait until the user finishes typing.
+        delay(1500)
+
+        // Require at least 3 characters for name searches.
+        if (query.isNotEmpty() && query.length < 3) {
+            speciesResults = emptyList()
+            isLoading = false
+            errorMessage = null
             return@LaunchedEffect
         }
 
-        delay(700)
+        if (query.isEmpty() && selectedCategory == "All") {
+            speciesResults = emptyList()
+            isLoading = false
+            errorMessage = null
+            return@LaunchedEffect
+        }
+
         isLoading = true
+        errorMessage = null
 
         try {
-            speciesResults = if (searchText.isBlank()) {
+            val results = if (query.isEmpty()) {
                 apiService.browseSpecies(selectedCategory)
             } else {
-                apiService.searchSpecies(searchText)
+                apiService.searchSpecies(query)
             }
+
+            speciesResults = results
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            errorMessage = "Unable to load species. Please try again."
+            errorMessage = e.message
+                ?: "Unable to load species. Please try again."
         } finally {
             isLoading = false
         }
@@ -137,17 +153,11 @@ fun SpeciesSearchScreen(
                             horizontal = AppStyle.dimens.md,
                             vertical = AppStyle.dimens.sm
                         ),
-                    placeholder = {
+                    label = {
                         Text("Search by common or scientific name")
                     },
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = null
-                        )
-                    },
                     singleLine = true,
-                    shape = MaterialTheme.shapes.extraLarge
+                    shape = MaterialTheme.shapes.small
                 )
             }
         }
@@ -209,6 +219,13 @@ fun SpeciesSearchScreen(
                         style = MaterialTheme.typography.titleMedium,
                         color = AppStyle.colors.textPrimary
                     )
+                    if (searchText.isBlank() && selectedCategory != "All") {
+                        Text(
+                            text = "Showing up to 50 species. Search by name to find more.",
+                            style = AppStyle.type.caption,
+                            color = AppStyle.colors.textSecondary
+                        )
+                    }
                 }
             }
 

@@ -1,4 +1,3 @@
-
 package com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views
 
 import com.comp350sec001group2.ekhoexplorer.ui.components.AccountMenu
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -186,7 +184,8 @@ fun ProfileScreenContent(
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = AppStyle.colors.background
+        containerColor = AppStyle.colors.background,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
 
         LazyVerticalGrid(
@@ -203,7 +202,10 @@ fun ProfileScreenContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(AppStyle.dimens.lg),
+                        .padding(
+                            horizontal = AppStyle.dimens.lg,
+                            vertical = AppStyle.dimens.sm
+                        ),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Displays the stored avatar or default silhouette.
@@ -290,14 +292,6 @@ fun ProfileScreenContent(
                                 color = AppStyle.colors.textSecondary
                             )
                         }
-                    }
-                    if (onSignOut != null) {
-                        AccountMenu(
-                            username = uiState.username,
-                            onSignOut = onSignOut,
-                            onChangePassword = onChangePassword,
-                            onRequestUsernameChange = onRequestUsernameChange
-                        )
                     }
                 }
             }

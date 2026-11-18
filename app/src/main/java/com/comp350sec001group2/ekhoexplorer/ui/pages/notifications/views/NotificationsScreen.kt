@@ -1,28 +1,18 @@
 package com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.views
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -75,7 +65,6 @@ fun NotificationsScreenContent(
     onEnabledChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val d = AppStyle.dimens
     val snackbarHostState = rememberErrorSnackbarState(uiState.error)
 
     Scaffold(
@@ -84,33 +73,7 @@ fun NotificationsScreenContent(
         // The bottom bar is applied by the app scaffold; the top bar below handles the status bar.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(AppStyle.colors.background)
-                    .padding(horizontal = d.sm, vertical = d.xs),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = AppStyle.colors.textPrimary,
-                    )
-                }
-                Text(
-                    text = "Notifications",
-                    style = AppStyle.type.username,
-                    color = AppStyle.colors.textPrimary,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = onMarkAllRead, enabled = uiState.unreadCount > 0) {
-                    Text("Mark all read")
-                }
-            }
-        },
-    ) { padding ->
+        ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding).fillMaxSize()) {
             item {
                 NotificationsToggleRow(enabled = uiState.notificationsEnabled, onEnabledChange = onEnabledChange)

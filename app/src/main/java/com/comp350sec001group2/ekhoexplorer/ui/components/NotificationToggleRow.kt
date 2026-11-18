@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
+import androidx.compose.ui.draw.scale
 
 /**
  * The on/off switch for notifications.
@@ -26,7 +27,11 @@ fun NotificationsToggleRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = "Notifications", style = AppStyle.type.username, color = AppStyle.colors.textPrimary)
-        Switch(checked = enabled, onCheckedChange = onEnabledChange)
+        Text(text = "Enable Notifications", style = AppStyle.type.username, color = AppStyle.colors.textPrimary)
+        Switch(
+            checked = enabled,
+            onCheckedChange = onEnabledChange,
+            modifier = Modifier.scale(0.8f)
+        )
     }
 }

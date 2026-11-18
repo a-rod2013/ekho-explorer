@@ -45,6 +45,13 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UsernameC
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.ProfileScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views.UserProfileScreen
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.views.ObservationDetailsScreen
+import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedViewModel
+import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.feedViewModelFactory
+import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.viewmodels.NotificationsViewModel
+import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.viewmodels.notificationsViewModelFactory
+import com.comp350sec001group2.ekhoexplorer.ui.components.AccountMenu
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.ProfileViewModel
+import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.profileViewModelFactory
 
 
 @Composable
@@ -69,6 +76,22 @@ private fun AppNavHost(
     onSignOut: () -> Unit
 ) {
     val navController = rememberNavController()
+
+    val profileViewModel: ProfileViewModel = viewModel(
+        factory = profileViewModelFactory
+    )
+
+    val profileUiState = profileViewModel.uiState
+
+    val notificationsViewModel: NotificationsViewModel =
+        viewModel(factory = notificationsViewModelFactory)
+
+    val notificationsState by notificationsViewModel.uiState
+        .collectAsStateWithLifecycle()
+
+    val feedViewModel: FeedViewModel = viewModel(factory = feedViewModelFactory)
+    val unreadNotifications by feedViewModel.unreadNotifications
+        .collectAsStateWithLifecycle()
 
     var showSpeciesSearch by remember { mutableStateOf(false) }
     var showMapSearch by remember { mutableStateOf(false) }
@@ -98,15 +121,39 @@ private fun AppNavHost(
 
     Scaffold(
         topBar = {
-            if (
-                showBottomBar &&
-                currentDestination != Screen.SpeciesDetails.destination
-            ) {
+            if (showBottomBar) {
                 AppHeader(
+                    unreadNotifications = unreadNotifications,
+                    onMarkAllRead = notificationsViewModel::onMarkAllRead,
+                    canMarkAllRead = notificationsState.unreadCount > 0,
+                    onCreateTrailClick = {
+                        navController.navigate(Screen.TrailWizard.destination)
+                    },
+                    onViewTrailsClick = {
+                        navController.navigate(Screen.AllTrails.destination) {
+                            launchSingleTop = true
+                        }
+                    },
                     onSpeciesClick = {
                         navController.navigate(Screen.Species.destination) {
                             launchSingleTop = true
                         }
+                    },
+                    accountMenu = if (currentDestination == Screen.Profile.destination) {
+                        {
+                            AccountMenu(
+                                username = profileUiState.username,
+                                onSignOut = onSignOut,
+                                onChangePassword = {
+                                    navController.navigate(Screen.ChangePassword.destination)
+                                },
+                                onRequestUsernameChange = {
+                                    navController.navigate(Screen.UsernameChange.destination)
+                                }
+                            )
+                        }
+                    } else {
+                        null
                     },
 
                     onSearchClick = {
@@ -141,14 +188,25 @@ private fun AppNavHost(
                     isFeed = currentDestination == Screen.Feed.destination,
                     pageTitle = when (currentDestination) {
                         Screen.Journal.destination -> "Field Journal"
-                        Screen.Map.destination -> "Map"
-                        Screen.Activity.destination -> "Activity"
-                        Screen.Feed.destination -> "Feed"
+                        Screen.ObservationDetails.destination -> "Observation Details"
                         Screen.Species.destination -> "Species Search"
+                        Screen.SpeciesDetails.destination -> "Species Details"
+                        Screen.Map.destination -> "Map"
+                        Screen.Feed.destination -> "Feed"
+                        Screen.Notifications.destination -> "Notifications"
+                        Screen.Activity.destination -> "Activity"
+                        Screen.AllTrails.destination -> "All Trails"
+                        Screen.TrailDetail.destination -> "Trail Details"
+                        Screen.Profile.destination -> "Profile"
                         else -> null
                     },
                     onBackClick = if (
-                        currentDestination == Screen.Species.destination
+                        currentDestination == Screen.Species.destination ||
+                        currentDestination == Screen.ObservationDetails.destination ||
+                        currentDestination == Screen.Notifications.destination ||
+                        currentDestination == Screen.SpeciesDetails.destination ||
+                        currentDestination == Screen.AllTrails.destination ||
+                        currentDestination == Screen.TrailDetail.destination
                     ) {
                         { navController.popBackStack() }
                     } else {

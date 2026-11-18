@@ -12,21 +12,20 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import com.comp350sec001group2.ekhoexplorer.ui.theme.Spacing
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.viewmodels.ObservationDetailsState
 import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.viewmodels.ObservationDetailsViewModel
+import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.viewmodels.observationDetailsViewModelFactory
+import com.comp350sec001group2.ekhoexplorer.ui.theme.Spacing
 import java.io.File
 import java.text.DateFormat
 import java.util.Date
-import com.comp350sec001group2.ekhoexplorer.ui.pages.journalHub.viewmodels.observationDetailsViewModelFactory
 
 @Composable
 fun ObservationDetailsScreen(
@@ -38,13 +37,15 @@ fun ObservationDetailsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Column(modifier = Modifier.fillMaxSize().padding(Spacing.lg)) {
-        TextButton(onClick = onBack) {
-            Text("Back to journal")
-        }
-
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(Spacing.lg)
+    ) {
         when (val current = state) {
-            ObservationDetailsState.Loading -> { CircularProgressIndicator() }
+            ObservationDetailsState.Loading -> {
+                CircularProgressIndicator()
+            }
 
             ObservationDetailsState.Error -> {
                 Text("Unable to load this observation.")
@@ -56,8 +57,10 @@ fun ObservationDetailsScreen(
                 if (entry == null) {
                     Text("This observation is unavailable or has been deleted.")
                 } else {
-                    LazyColumn(modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(Spacing.lg)) {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.lg)
+                    ) {
                         item {
                             Text(
                                 text = entry.title.ifBlank { "Untitled" },
@@ -92,7 +95,9 @@ fun ObservationDetailsScreen(
                                     AsyncImage(
                                         model = File(path),
                                         contentDescription = "$photoLabel: ${entry.title}",
-                                        modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .aspectRatio(4f / 3f),
                                         contentScale = ContentScale.Fit,
                                     )
 
@@ -115,7 +120,9 @@ fun ObservationDetailsScreen(
                             )
 
                             Text(
-                                text = entry.notes.ifBlank { "No notes provided." },
+                                text = entry.notes.ifBlank {
+                                    "No notes provided."
+                                },
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                         }
