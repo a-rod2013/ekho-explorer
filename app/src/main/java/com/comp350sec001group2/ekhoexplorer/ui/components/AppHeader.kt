@@ -180,7 +180,7 @@ fun AppHeader(
                     tint = AppStyle.colors.textPrimary
                 )
             }
-        } else {
+        } else if (!isJournal) {
             IconButton(onClick = onSearchClick) {
                 Icon(
                     imageVector = if (

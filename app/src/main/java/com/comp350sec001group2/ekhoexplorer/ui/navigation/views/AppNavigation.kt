@@ -108,17 +108,27 @@ private fun AppNavHost(
                             launchSingleTop = true
                         }
                     },
+
+                    onSearchClick = {
+                        when (currentDestination) {
+                            Screen.ObservationDetails.destination -> {
+                                navController.popBackStack(
+                                    route = Screen.Journal.destination,
+                                    inclusive = false,
+                                )
+                            }
+
+                            Screen.Species.destination -> {
+                                showSpeciesSearch = !showSpeciesSearch
+                            }
+                        }
+                    },
                     onNotificationsClick = {
                         navController.navigate(Screen.Notifications.destination) {
                             launchSingleTop = true
                         }
                     },
                     onSignOut = onSignOut,
-                    onSearchClick = {
-                        if (currentDestination == Screen.Species.destination) {
-                            showSpeciesSearch = !showSpeciesSearch
-                        }
-                    },
                     onMapSearchClick = {
                         showMapSearch = !showMapSearch
                         showMapFilters = false
