@@ -30,7 +30,9 @@ fun ObservationForm(
         description: String,
         visibility: String
     ) -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    showVisibility: Boolean = true,
+    saveButtonText: String = "Save Observation"
 ) {
     val context = LocalContext.current
 
@@ -141,29 +143,32 @@ fun ObservationForm(
         }
 
         // Visibility selection
-        Text(
-            text = "Who can see this observation?",
-            fontWeight = FontWeight.Medium,
-            style = MaterialTheme.typography.labelMedium
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            FilterChip(
-                selected = visibility == "PRIVATE",
-                onClick = { visibility = "PRIVATE" },
-                label = { Text("Private") },
-                modifier = Modifier.weight(1f)
+        if (showVisibility) {
+            Text(
+                text = "Who can see this observation?",
+                fontWeight = FontWeight.Medium,
+                style = MaterialTheme.typography.labelMedium
             )
 
-            FilterChip(
-                selected = visibility == "PUBLIC",
-                onClick = { visibility = "PUBLIC" },
-                label = { Text("Public") },
-                modifier = Modifier.weight(1f)
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                FilterChip(
+                    selected = visibility == "PRIVATE",
+                    onClick = { visibility = "PRIVATE" },
+                    label = { Text("Private") },
+                    modifier = Modifier.weight(1f)
+                )
+
+                FilterChip(
+                    selected = visibility == "PUBLIC",
+                    onClick = { visibility = "PUBLIC" },
+                    label = { Text("Public") },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+
         }
 
         // Description
@@ -205,7 +210,7 @@ fun ObservationForm(
                     )
                 }
             ) {
-                Text("Save Observation")
+                Text(saveButtonText)
             }
         }
     }

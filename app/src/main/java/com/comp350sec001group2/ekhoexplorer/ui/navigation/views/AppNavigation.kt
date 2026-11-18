@@ -18,10 +18,6 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.material3.OutlinedSecureTextField
-import androidx.compose.material3.TextButton
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthState
 import com.comp350sec001group2.ekhoexplorer.ui.components.AppHeader
 import com.comp350sec001group2.ekhoexplorer.ui.map.MapScreen

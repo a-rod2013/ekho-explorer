@@ -44,7 +44,6 @@ fun AppBottomBar(
         Screen.Journal to Icons.Filled.Book,
         Screen.Map to Icons.Filled.Explore,
         Screen.Activity to Icons.Filled.Hiking,
-        Screen.Action to Icons.Filled.CameraAlt,
         Screen.Feed to Icons.Filled.Forum,
         Screen.Profile to Icons.Filled.Person
     )

@@ -25,6 +25,10 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -442,16 +446,7 @@ fun MapScreen(
                 expandedCluster = null
                 selectedObservation = null
 
-                // Refresh the markers on the Map
-                map?.let { currentMap ->
-                    displayClusters(
-                        context = context,
-                        map = currentMap,
-                        observations = filteredObservations,
-                        markerObservations = markerObservations,
-                        markerClusters = markerClusters
-                    )
-                }
+
 
                 Log.d(
                     "MapObservation",
@@ -567,41 +562,14 @@ fun MapScreen(
         // Map controls
         Column(
             modifier = Modifier
-                .align(Alignment.TopEnd)
+                .align(Alignment.BottomEnd)
                 .padding(AppStyle.dimens.lg),
             verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
         ) {
 
-            // Trail drawing controls
-            DrawTrail(
-                mapView = mapView,
-                map = map,
-                onTrailFinished = { points ->
-                    Log.d(
-                        "DrawTrail",
-                        "Trail finished with ${points.size} points"
-                    )
-                }
-            )
 
-            Button(
-                onClick = {
-                    getObservationLocation(context) { location ->
-                        if (location != null) {
-                            map?.animateCamera(
-                                CameraUpdateFactory.newLatLngZoom(
-                                    location,
-                                    16.0
-                                )
-                            )
-                        } else {
-                            Log.e("EkhoMap", "Could not get current location")
-                        }
-                    }
-                }
-            ) {
-                Text("My Location")
-            }
+
+
 
             // Add an observation
             AddMarker(
@@ -716,28 +684,7 @@ fun MapScreen(
                             )
                         }
 
-                        // Refresh the map markers after saving
-                        map?.let { currentMap ->
 
-                            // Remove any expanded markers
-                            collapseCluster(
-                                map = currentMap,
-                                expandedMarkers = expandedMarkers,
-                                markerObservations = markerObservations
-                            )
-
-                            expandedMarkers.clear()
-                            expandedCluster = null
-
-                            // Refresh observation clusters
-                            displayClusters(
-                                context = context,
-                                map = currentMap,
-                                observations = filteredObservations,
-                                markerObservations = markerObservations,
-                                markerClusters = markerClusters
-                            )
-                        }
 
                         // Move the camera to the observation
                         map?.animateCamera(
@@ -758,18 +705,44 @@ fun MapScreen(
 
 
         }
+        // My Location button
+        IconButton(
+            onClick = {
+                getObservationLocation(context) { location ->
+                    if (location != null) {
+                        map?.animateCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                location,
+                                16.0
+                            )
+                        )
+                    } else {
+                        Log.e("EkhoMap", "Could not get current location")
+                    }
+                }
+            },
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(AppStyle.dimens.lg)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.MyLocation,
+                contentDescription = "My Location"
+            )
     }
-    // Show details for the selected observation
-    selectedObservation?.let { observation ->
-        ObservationDetails(
-            observation = observation,
-            photoRepository = app.container.observationPhotoRepository,
-            onDismiss = {
-                selectedObservation = null
-            }
-        )
+        // Show details for the selected observation
+        selectedObservation?.let { observation ->
+            ObservationDetails(
+                observation = observation,
+                photoRepository = app.container.observationPhotoRepository,
+                onDismiss = {
+                    selectedObservation = null
+                }
+            )
+        }
     }
 }
+
 
 // Creates the red icon for the user's location
 private fun createUserLocationIcon(context: android.content.Context): Icon {
