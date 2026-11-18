@@ -27,7 +27,6 @@ import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 @Composable
 fun FieldJournalScreen(
     onOpenObservation: (String) -> Unit,
-    showSearchField: Boolean = false,
     onOpenSpecies: () -> Unit = {},
     viewModel: JournalViewModel = viewModel(factory = journalViewModelFactory)
 ) {
@@ -39,62 +38,51 @@ fun FieldJournalScreen(
     val dimens = AppStyle.dimens
     val colors = AppStyle.colors
 
-    // Leaving this screen clears its query.
-    LaunchedEffect(showSearchField) {
-        if (!showSearchField) {
-            viewModel.updateSearchQuery("")
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = dimens.lg, vertical = dimens.sm),
         verticalArrangement = Arrangement.spacedBy(dimens.md)
     ) {
-        if (showSearchField) {
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = viewModel::updateSearchQuery,
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Search observations")
-                },
-                singleLine = true,
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        TextButton(
-                            onClick = {
-                                viewModel.updateSearchQuery("")
-                            },
-                        ) {
-                            Text("Clear")
-                        }
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = viewModel::updateSearchQuery,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Search Observations") },
+            singleLine = true,
+            trailingIcon = {
+                if (searchQuery.isNotEmpty()) {
+                    TextButton(
+                        onClick = {
+                            viewModel.updateSearchQuery("")
+                        },
+                    ) {
+                        Text("Clear")
                     }
-                },
-            )
+                }
+            },
+        )
+        if (prefixSuggestions.isNotEmpty()) {
+            Column {
+                Text(
+                    text = "Suggested titles and keywords",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = colors.textSecondary,
+                )
 
-            if (prefixSuggestions.isNotEmpty()) {
-                Column {
-                    Text(
-                        text = "Suggested titles and keywords",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = colors.textSecondary,
-                    )
-
-                    prefixSuggestions.forEach { suggestion ->
-                        TextButton(
-                            onClick = {
-                                viewModel.updateSearchQuery(suggestion)
-                            },
+                prefixSuggestions.forEach { suggestion ->
+                    TextButton(
+                        onClick = {
+                            viewModel.updateSearchQuery(suggestion)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = suggestion,
                             modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            Text(
-                                text = suggestion,
-                                modifier = Modifier.fillMaxWidth(),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.textPrimary,
+                        )
                     }
                 }
             }

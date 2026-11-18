@@ -78,8 +78,6 @@ private fun AppNavHost(
     var showMapSearch by remember { mutableStateOf(false) }
     var showMapFilters by remember { mutableStateOf(false) }
 
-    var showJournalSearch by remember { mutableStateOf(false) }
-
     // Temporary authentication navigation
     val startRoute = remember {
         if (authState is AuthState.SignedIn) {
@@ -93,16 +91,6 @@ private fun AppNavHost(
 
     val currentDestination =
         backStackEntry?.destination?.route ?: Screen.Map.destination
-
-    LaunchedEffect(currentDestination) {
-        val isJournalOrDetails =
-            currentDestination == Screen.Journal.destination ||
-                currentDestination == Screen.ObservationDetails.destination
-
-        if (!isJournalOrDetails) {
-            showJournalSearch = false
-        }
-    }
 
     // Show the bottom bar only inside the main app
     val showBottomBar =
@@ -127,13 +115,7 @@ private fun AppNavHost(
 
                     onSearchClick = {
                         when (currentDestination) {
-                            Screen.Journal.destination -> {
-                                showJournalSearch = !showJournalSearch
-                            }
-
                             Screen.ObservationDetails.destination -> {
-                                showJournalSearch = true
-
                                 navController.popBackStack(
                                     route = Screen.Journal.destination,
                                     inclusive = false,
@@ -221,7 +203,6 @@ private fun AppNavHost(
                 // Field Journal
                 composable(Screen.Journal.destination) {
                     FieldJournalScreen(
-                        showSearchField = showJournalSearch,
                         onOpenObservation = { entryId ->
                             navController.navigate(
                                 Screen.ObservationDetails.createRoute(entryId)

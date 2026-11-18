@@ -137,12 +137,9 @@ fun AppHeader(
                         tint = AppStyle.colors.textPrimary,
                     )
                 }
-            } else {
+            } else  if (!isJournal) {
                 val showFilterIcon =
-                    !isJournal && (
-                        pageTitle == "Activity" ||
-                            pageTitle == "Feed"
-                        )
+                    pageTitle == "Activity" || pageTitle == "Feed"
 
                 IconButton(onClick = onSearchClick) {
                     Icon(
