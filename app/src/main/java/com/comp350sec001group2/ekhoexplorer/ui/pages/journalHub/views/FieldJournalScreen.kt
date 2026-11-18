@@ -23,6 +23,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 
 @Composable
 fun FieldJournalScreen(
+    onOpenObservation: (String) -> Unit,
     onOpenSpecies: () -> Unit = {},
     viewModel: JournalViewModel = viewModel(factory = journalViewModelFactory)
 ) {
@@ -59,7 +60,12 @@ fun FieldJournalScreen(
                     verticalArrangement = Arrangement.spacedBy(dimens.sm)
                 ) {
                     items(entries, key = { it.id }) { entry ->
-                        ObservationCard(entry = entry)
+                        ObservationCard(
+                            entry = entry,
+                            onClick = {
+                                onOpenObservation(entry.id)
+                            }
+                        )
                     }
                 }
             }

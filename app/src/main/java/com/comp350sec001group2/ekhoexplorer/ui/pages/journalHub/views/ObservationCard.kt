@@ -19,6 +19,7 @@ import java.util.Date
 @Composable
 fun ObservationCard(
     entry: JournalDraft,
+    onClick: () -> Unit,
 ) {
     val colors = AppStyle.colors
     val dimens = AppStyle.dimens
@@ -35,6 +36,7 @@ fun ObservationCard(
         ?.trim()
 
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {

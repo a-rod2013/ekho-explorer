@@ -9,7 +9,10 @@ import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalDraft
 import com.comp350sec001group2.ekhoexplorer.Business.Journal.JournalRepository
 import com.comp350sec001group2.ekhoexplorer.EkhoApp
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -41,3 +44,58 @@ val journalViewModelFactory = viewModelFactory {
         JournalViewModel(app.container.journalRepository)
     }
 }
+sealed interface ObservationDetailsState {
+    data object Loading : ObservationDetailsState
+
+    data class Loaded(
+        val entry: JournalDraft?) : ObservationDetailsState
+
+    data object Error: ObservationDetailsState
+}
+@OptIn(ExperimentalCoroutinesApi::class)
+class ObservationDetailsViewModel(
+    repository: JournalRepository,
+    entryId: String,
+) : ViewModel() {
+
+    val state: StateFlow<ObservationDetailsState> =
+        EhkoCache.activeUserFlow.flatMapLatest { user ->
+            if (user.isSignedIn) {
+                repository.observeDrafts(user.userId)
+                    .map<List<JournalDraft>, ObservationDetailsState> {
+                        entries -> ObservationDetailsState.Loaded(
+                            entry = entries.firstOrNull {
+                                it.id == entryId
+                            },
+                        )
+                    }
+                    .onStart { emit(ObservationDetailsState.Loading)
+                    }
+                    .catch { emit(ObservationDetailsState.Error)
+                    }
+            } else {
+                flowOf<ObservationDetailsState>(
+                    ObservationDetailsState.Loaded(
+                        entry = null,
+                    )
+                )
+            }
+        }
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = ObservationDetailsState.Loading,
+            )
+}
+
+fun observationDetailsViewModelFactory(entryId: String) =
+    viewModelFactory {
+        initializer {
+            val app = this[APPLICATION_KEY] as EkhoApp
+
+            ObservationDetailsViewModel(
+                repository = app.container.journalRepository,
+                entryId = entryId,
+            )
+        }
+    }
