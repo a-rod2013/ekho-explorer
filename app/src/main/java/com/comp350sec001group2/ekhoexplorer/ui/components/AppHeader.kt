@@ -48,35 +48,45 @@ fun AppHeader(
             .statusBarsPadding()
             .padding(AppStyle.dimens.md),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (onBackClick != null) {
-                IconButton(onClick = onBackClick) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back",
-                        tint = AppStyle.colors.textPrimary,
-                    )
-                }
-            } else {
-                Box {
-                    IconButton(
-                        onClick = { menuExpanded = true },
-                        enabled = isJournal || isFeed,
-                    ) {
+        if (pageTitle != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (onBackClick != null) {
+                    IconButton(onClick = onBackClick) {
                         Icon(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = "Open navigation menu",
-                            tint = AppStyle.colors.textPrimary,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back",
+                            tint = AppStyle.colors.textPrimary
                         )
                     }
-
+                } else if (
+                    pageTitle == "Field Journal" ||
+                    pageTitle == "Map" ||
+                    pageTitle == "Activity" ||
+                    pageTitle == "Feed") {
+                    if (pageTitle == "Map") {
+                        IconButton(onClick = onMapFilterClick) {
+                            Icon(
+                                imageVector = Icons.Filled.Tune,
+                                contentDescription = "Filter observations",
+                                tint = AppStyle.colors.textPrimary
+                            )
+                        }
+                    } else {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                imageVector = Icons.Filled.Menu,
+                                contentDescription = "Open navigation menu",
+                                tint = AppStyle.colors.textPrimary
+                            )
+                        }
+                    }
                     DropdownMenu(
                         expanded = menuExpanded && (isJournal || isFeed),
-                        onDismissRequest = { menuExpanded = false },
+                        onDismissRequest = { menuExpanded = false }
                     ) {
                         if (isJournal) {
                             DropdownMenuItem(
@@ -84,7 +94,7 @@ fun AppHeader(
                                 onClick = {
                                     menuExpanded = false
                                     onSpeciesClick()
-                                },
+                                }
                             )
                         }
 
@@ -94,7 +104,7 @@ fun AppHeader(
                                 onClick = {
                                     menuExpanded = false
                                     onNotificationsClick()
-                                },
+                                }
                             )
 
                             DropdownMenuItem(
@@ -102,60 +112,97 @@ fun AppHeader(
                                 onClick = {
                                     menuExpanded = false
                                     onSignOut()
-                                },
+                                }
                             )
                         }
                     }
                 }
-            }
 
-            if (pageTitle != null) {
                 Text(
                     text = pageTitle,
                     style = MaterialTheme.typography.titleMedium,
-                    color = AppStyle.colors.textPrimary,
+                    color = AppStyle.colors.textPrimary
                 )
             }
+        } else {
+            Box {
+                IconButton(
+                    onClick = { menuExpanded = true },
+                    enabled = isJournal || isFeed
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Menu,
+                        contentDescription = "Open navigation menu",
+                        tint = AppStyle.colors.textPrimary
+                    )
+                }
+
+                DropdownMenu(
+                    expanded = menuExpanded && (isJournal || isFeed),
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    if (isJournal) {
+                        DropdownMenuItem(
+                            text = { Text("Species Search") },
+                            onClick = {
+                                menuExpanded = false
+                                onSpeciesClick()
+                            }
+                        )
+                    }
+
+                    if (isFeed) {
+                        DropdownMenuItem(
+                            text = { Text("Notifications") },
+                            onClick = {
+                                menuExpanded = false
+                                onNotificationsClick()
+                            }
+                        )
+
+                        DropdownMenuItem(
+                            text = { Text("Log Out") },
+                            onClick = {
+                                menuExpanded = false
+                                onSignOut()
+                            }
+                        )
+                    }
+                }
+
+            }
         }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (pageTitle == "Map") {
-                IconButton(onClick = onMapSearchClick) {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "Search observations",
-                        tint = AppStyle.colors.textPrimary,
-                    )
-                }
-
-                IconButton(onClick = onMapFilterClick) {
-                    Icon(
-                        imageVector = Icons.Filled.Tune,
-                        contentDescription = "Filter observations",
-                        tint = AppStyle.colors.textPrimary,
-                    )
-                }
-            } else  if (!isJournal) {
-                val showFilterIcon =
-                    pageTitle == "Activity" || pageTitle == "Feed"
-
-                IconButton(onClick = onSearchClick) {
-                    Icon(
-                        imageVector = if (showFilterIcon) {
-                            Icons.Filled.Tune
-                        } else {
-                            Icons.Filled.Search
-                        },
-                        contentDescription = if (showFilterIcon) {
-                            "Filter this page"
-                        } else {
-                            "Search this page"
-                        },
-                        tint = AppStyle.colors.textPrimary,
-                    )
-                }
+        if (pageTitle == "Map") {
+            IconButton(onClick = onMapSearchClick) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = "Search observations",
+                    tint = AppStyle.colors.textPrimary
+                )
+            }
+        } else if (!isJournal) {
+            IconButton(onClick = onSearchClick) {
+                Icon(
+                    imageVector = if (
+                        pageTitle == "Field Journal" ||
+                        pageTitle == "Activity" ||
+                        pageTitle == "Feed"
+                    ) {
+                        Icons.Filled.Tune
+                    } else {
+                        Icons.Filled.Search
+                    },
+                    contentDescription = if (
+                        pageTitle == "Field Journal" ||
+                        pageTitle == "Activity" ||
+                        pageTitle == "Feed"
+                    ) {
+                        "Filter this page"
+                    } else {
+                        "Search this page"
+                    },
+                    tint = AppStyle.colors.textPrimary
+                )
             }
         }
     }
