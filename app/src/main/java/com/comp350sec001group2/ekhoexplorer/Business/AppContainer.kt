@@ -2,10 +2,21 @@ package com.comp350sec001group2.ekhoexplorer.Business
 
 import android.content.Context
 import android.util.Log
+
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetFeedVotesQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.VoteOnFeedPostTransaction
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserPostsQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.UpdateUserAvatarCommand
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserAvatarQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserAvatar
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.EncodedPhoto
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthBackend
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirebaseAuthRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirestoreProfileStore
+import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirestoreSupportRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Auth.SupportRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.SessionHooks
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.ActiveUser
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
@@ -15,7 +26,9 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreService
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.CommentRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FeedRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreCommentRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetTrailAccessQuery
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreFeedRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreTrailRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreNotificationRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreUserRelationsRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.NotificationRepository
@@ -36,7 +49,17 @@ import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoCache
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoPreparer
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SettingsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Trails.FileWalkStore
+import com.comp350sec001group2.ekhoexplorer.Business.Trails.TrailRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Trails.WalkSession
 import com.comp350sec001group2.ekhoexplorer.Business.Settings.SharedPrefsSettingsRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetUserProfileQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.UserProfile
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.UpdateUserBioCommand
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.ObservationRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreObservationRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.FirestoreObservationPhotoStore
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
@@ -47,6 +70,45 @@ import kotlinx.coroutines.launch
 
 class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
     private val service = FirestoreService(Firebase.firestore)
+    suspend fun getUserProfile(userId: String): UserProfile? {
+        return service.execute(GetUserProfileQuery(userId))
+    }
+
+    suspend fun updateUserBio(userId: String, bio: String) {
+        service.execute(UpdateUserBioCommand(userId, bio))
+    }
+
+    suspend fun getUserPosts(userId: String): List<Post> {
+        return service.execute(GetUserPostsQuery(userId))
+    }
+
+    suspend fun getUserPostVotes(
+        userId: String,
+        postIds: List<String>
+    ): Map<String, Vote> {
+        return postIds.chunked(30).fold(emptyMap()) { votes, chunk ->
+            votes + service.execute(GetFeedVotesQuery(userId, chunk))
+        }
+    }
+
+    suspend fun voteOnProfilePost(
+        postId: String,
+        userId: String,
+        vote: Vote
+    ): Vote {
+        return service.execute(
+            VoteOnFeedPostTransaction(postId, userId, vote)
+        )
+    }
+
+    suspend fun getUserAvatar(userId: String): UserAvatar? {
+        return service.execute(GetUserAvatarQuery(userId))
+    }
+
+    suspend fun updateUserAvatar(userId: String, photo: EncodedPhoto) {
+        service.execute(UpdateUserAvatarCommand(userId, photo))
+    }
+
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val journalDatabase = JournalDatabase.create(context)
@@ -96,11 +158,18 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
 
     val photoRepository: PhotoRepository = CachedPhotoRepository(FirestorePhotoStore(service), photoCache)
 
+    val observationPhotoRepository: PhotoRepository = CachedPhotoRepository(FirestoreObservationPhotoStore(service))
     val photoPreparer = PhotoPreparer()
 
     val feedRepository: FeedRepository = FirestoreFeedRepository(service, notificationService, photoRepository)
 
+    val observationRepository: ObservationRepository = FirestoreObservationRepository(service)
+
     val userRelationsRepository: UserRelationsRepository = FirestoreUserRelationsRepository(service)
+
+    val trailRepository: TrailRepository = FirestoreTrailRepository(service)
+
+    val walkSession = WalkSession(FileWalkStore(java.io.File(context.filesDir, "trail_walk.csv")))
 
     /** Comments are per post, so each post screen asks for its own repository. */
     fun commentRepositoryFor(postId: String): CommentRepository =
@@ -110,6 +179,8 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
             notificationService,
             onCommentAdded = { feedRepository.onCommentAdded(postId) },
         )
+
+    val supportRepository: SupportRepository = FirestoreSupportRepository(service)
 
     val authRepository: AuthRepository = FirebaseAuthRepository(
         backend = FirebaseAuthBackend(),
@@ -126,10 +197,30 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
                         Log.w("AppContainer", "Could not load blocked users: ${e.kind}", e)
                     }
                 }
+
+                appScope.launch {
+                    try {
+                        service.execute(GetUserProfileQuery(user.userId))?.let { profile ->
+                            EhkoCache.updateActiveUser { it.copy(userName = profile.username) }
+                        }
+                    } catch (e: FirestoreException) {
+                        Log.w("AppContainer", "Could not refresh the username: ${e.kind}", e)
+                    }
+                }
+
+                appScope.launch {
+                    try {
+                        val access = service.execute(GetTrailAccessQuery(user.userId))
+                        EhkoCache.updateActiveUser { it.copy(isAdmin = access.isAdmin, following = access.following) }
+                    } catch (e: FirestoreException) {
+                        Log.w("AppContainer", "Could not load trail access: ${e.kind}", e)
+                    }
+                }
             }
 
             override suspend fun onSignedOut() {
                 feedRepository.clear()
+                trailRepository.clear()
                 EhkoCache.clear()
             }
         },

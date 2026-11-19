@@ -19,22 +19,28 @@ import java.util.Date
 @Composable
 fun ObservationCard(
     entry: JournalDraft,
+    onClick: () -> Unit,
 ) {
     val colors = AppStyle.colors
     val dimens = AppStyle.dimens
 
     // Extract category and location from observation notes
     val category = entry.notes.lines()
-        .firstOrNull { it.startsWith("Category:", ignoreCase = true) }
+        .firstOrNull {
+            it.trimStart().startsWith("Category:", ignoreCase = true)
+        }
         ?.substringAfter(":")
         ?.trim()
 
     val location = entry.notes.lines()
-        .firstOrNull { it.startsWith("Location:", ignoreCase = true) }
+        .lastOrNull {
+            it.trimStart().startsWith("Location:", ignoreCase = true)
+        }
         ?.substringAfter(":")
         ?.trim()
 
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {

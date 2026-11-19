@@ -2,7 +2,7 @@ package com.comp350sec001group2.ekhoexplorer.ui.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -24,6 +24,8 @@ fun AccountMenu(
     username: String,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
+    onChangePassword: (() -> Unit)? = null,
+    onRequestUsernameChange: (() -> Unit)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var confirming by remember { mutableStateOf(false) }
@@ -31,8 +33,8 @@ fun AccountMenu(
     Box(modifier) {
         IconButton(onClick = { expanded = true }, modifier = Modifier.testTag("account-button")) {
             Icon(
-                imageVector = Icons.Filled.AccountCircle,
-                contentDescription = "Account",
+                imageVector = Icons.Filled.Settings,
+                contentDescription = "Settings",
                 tint = AppStyle.colors.textSecondary,
             )
         }
@@ -42,6 +44,20 @@ fun AccountMenu(
                     text = { Text("Signed in as $username") },
                     onClick = {},
                     enabled = false,
+                )
+            }
+            if (onChangePassword != null) {
+                DropdownMenuItem(
+                    text = { Text("Change password") },
+                    onClick = { expanded = false; onChangePassword() },
+                    modifier = Modifier.testTag("change-password-item"),
+                )
+            }
+            if (onRequestUsernameChange != null) {
+                DropdownMenuItem(
+                    text = { Text("Request username change") },
+                    onClick = { expanded = false; onRequestUsernameChange() },
+                    modifier = Modifier.testTag("username-change-item"),
                 )
             }
             DropdownMenuItem(

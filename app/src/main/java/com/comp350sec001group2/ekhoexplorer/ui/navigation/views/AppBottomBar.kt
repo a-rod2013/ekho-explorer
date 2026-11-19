@@ -19,6 +19,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Hiking
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
@@ -41,10 +42,10 @@ fun AppBottomBar(
     // add navigation tabs using screens defined in Screen.kt
     val items = listOf(
         Screen.Journal to Icons.Filled.Book,
-        Screen.Map to Icons.Filled.Explore,
-        Screen.Action to Icons.Filled.CameraAlt,
         Screen.Feed to Icons.Filled.Forum,
-        //Screen.Profile to Icons.Filled.Person
+        Screen.Map to Icons.Filled.Explore,
+        Screen.Activity to Icons.Filled.Hiking,
+        Screen.Profile to Icons.Filled.Person
     )
 
     Box {
@@ -59,8 +60,6 @@ fun AppBottomBar(
                 val selected = currentDestination == screen.destination
                 NavigationBarItem(
                     selected = selected,
-                    // disable profile until their navigation is ready
-                    //enabled = screen != Screen.Profile,
                     onClick = { onNavigate(screen) },
                     icon = {
                         Icon(

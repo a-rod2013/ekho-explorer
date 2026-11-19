@@ -13,5 +13,11 @@ interface AuthBackend {
 
     suspend fun deleteCurrentAccount()
 
+    suspend fun sendEmailVerification()
+
+    suspend fun reload(): AuthIdentity?
+
+    suspend fun sendPasswordReset(email: String)
+
     fun signOut()
 }

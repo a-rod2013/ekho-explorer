@@ -12,6 +12,8 @@ data class ActiveUser(
     val settings: UserSettings = UserSettings(),
     val blockedUserIds: Set<String> = emptySet(),
     val hiddenUserIds: Set<String> = emptySet(),
+    val isAdmin: Boolean = false,
+    val following: Set<String> = emptySet(),
 ) {
     val isSignedIn: Boolean get() = userId.isNotEmpty()
 

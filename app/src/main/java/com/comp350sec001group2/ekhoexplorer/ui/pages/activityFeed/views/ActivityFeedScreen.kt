@@ -5,11 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -30,7 +26,6 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.SamplePosts
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.ui.components.CommentsSheet
 import com.comp350sec001group2.ekhoexplorer.ui.components.EmptyState
-import com.comp350sec001group2.ekhoexplorer.ui.components.FeedHeader
 import com.comp350sec001group2.ekhoexplorer.ui.components.LocalPhotoLoader
 import com.comp350sec001group2.ekhoexplorer.ui.components.PostCard
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.FeedUIState
@@ -38,7 +33,7 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.Fee
 import com.comp350sec001group2.ekhoexplorer.ui.pages.activityFeed.viewmodels.feedViewModelFactory
 import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
-
+import com.comp350sec001group2.ekhoexplorer.ui.components.ObservationActionButton
 
 @Composable
 fun FeedScreen(
@@ -47,6 +42,7 @@ fun FeedScreen(
     onSearch: (String) -> Unit = {},
     onOpenNotifications: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
+    onUserClick: (userId: String) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val unreadNotifications by viewModel.unreadNotifications.collectAsStateWithLifecycle()
@@ -67,6 +63,13 @@ fun FeedScreen(
             unreadNotifications = unreadNotifications,
             onOpenNotifications = onOpenNotifications,
             onSignOut = onSignOut,
+            onUserClick = onUserClick,
+            actionButton = {
+                ObservationActionButton(
+                    publishToFeed = true,
+                    onSaved = { viewModel.onRefresh() }
+                )
+            },
         )
     }
 
@@ -93,6 +96,8 @@ fun FeedScreenContent(
     onOpenNotifications: () -> Unit = {},
     onSignOut: (() -> Unit)? = null,
     onNewPost: (() -> Unit)? = null,
+    onUserClick: (userId: String) -> Unit = {},
+    actionButton: @Composable () -> Unit = {},
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(uiState.error) {
@@ -105,30 +110,12 @@ fun FeedScreenContent(
         // The header and bottom bar apply their own system-bar insets.
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            if (onNewPost != null) {
-                FloatingActionButton(onClick = onNewPost) {
-                    Icon(Icons.Filled.Add, contentDescription = "New post")
-                }
-            }
-        },
+        floatingActionButton = actionButton,
+
 
         // COMMENTING OUT SEARCH BAR FOR SPRINT ONE DEMO PURPOSES, DO NOT DELETE
         // topBar = { FeedHeader(query = uiState.query, onQueryChange = onQueryChange, onSearch = onSearch) },
 
-        // Same header with the search field left out (see above) and the notification bell added.
-        topBar = {
-            FeedHeader(
-                query = uiState.query,
-                onQueryChange = onQueryChange,
-                onSearch = onSearch,
-                showSearch = false,
-                onBellClick = onOpenNotifications,
-                unreadNotifications = unreadNotifications,
-                onSignOut = onSignOut,
-                username = uiState.currentUserName,
-            )
-        },
     ) { padding ->
         PullToRefreshBox(
             isRefreshing = uiState.isRefreshing,
@@ -160,6 +147,7 @@ fun FeedScreenContent(
                         onDelete = { onDeletePost(post.id) },
                         onHideUser = { onHideUser(post.userId) },
                         onBlockUser = { onBlockUser(post.userId) },
+                        onUserClick = onUserClick,
                     )
                 }
             }

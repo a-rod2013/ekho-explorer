@@ -1,10 +1,25 @@
 package com.comp350sec001group2.ekhoexplorer.ui.components
 
+import android.util.Log
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
+import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import com.comp350sec001group2.ekhoexplorer.EkhoApp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.cancellation.CancellationException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
@@ -129,20 +144,81 @@ fun CommentsContent(
 
 @Composable
 private fun CommentRow(comment: Comment, onVote: (Vote) -> Unit, modifier: Modifier = Modifier) {
+
+    val context = LocalContext.current
+    val app = context.applicationContext as EkhoApp
+
+    val avatarBitmap by produceState<Bitmap?>(
+        initialValue = null,
+        comment.userId
+    ) {
+        value = try {
+            val avatar = app.container.getUserAvatar(comment.userId)
+
+            avatar?.let {
+                withContext(Dispatchers.Default) {
+                    BitmapFactory.decodeByteArray(
+                        it.bytes,
+                        0,
+                        it.bytes.size
+                    )
+                }
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(
+                "CommentAvatar",
+                "Failed to load avatar for comment author",
+                e
+            )
+            null
+        }
+    }
+
     val d = AppStyle.dimens
     Row(
         modifier = modifier.fillMaxWidth().padding(horizontal = d.lg, vertical = d.sm),
         horizontalArrangement = Arrangement.spacedBy(d.md),
     ) {
-        AsyncImage(
-            model = comment.avatarUrl,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
+
+        Box(
             modifier = Modifier
                 .size(d.avatar)
                 .clip(CircleShape)
                 .background(AppStyle.colors.surface),
-        )
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                avatarBitmap != null -> {
+                    Image(
+                        bitmap = avatarBitmap!!.asImageBitmap(),
+                        contentDescription = "Profile picture of ${comment.username}",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                !comment.avatarUrl.isNullOrBlank() -> {
+                    AsyncImage(
+                        model = comment.avatarUrl,
+                        contentDescription = "Profile picture of ${comment.username}",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                else -> {
+                    Icon(
+                        imageVector = Icons.Default.AccountCircle,
+                        contentDescription = "Default profile picture",
+                        modifier = Modifier.fillMaxSize(),
+                        tint = AppStyle.colors.textSecondary
+                    )
+                }
+            }
+        }
+
         Column(modifier = Modifier.weight(1f)) {
             Text(text = comment.username, style = AppStyle.type.username, color = AppStyle.colors.textPrimary)
             Text(text = comment.text, style = AppStyle.type.caption, color = AppStyle.colors.textPrimary)

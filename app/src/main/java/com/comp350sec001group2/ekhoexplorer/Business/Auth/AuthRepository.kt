@@ -22,6 +22,12 @@ interface AuthRepository {
     suspend fun signIn(email: String, password: String)
     suspend fun signUp(username: String, email: String, password: String)
     suspend fun signOut()
+
+    suspend fun resendVerification()
+
+    suspend fun refreshVerification(): Boolean
+
+    suspend fun sendPasswordReset(email: String)
 }
 
 class FirebaseAuthRepository(
@@ -51,6 +57,10 @@ class FirebaseAuthRepository(
                     if (current is AuthState.SignedIn) hooks.onSignedOut()
                     if (current !is AuthState.SignedOut) mutableState.value = AuthState.SignedOut
                 }
+                !identity.emailVerified -> {
+                    if (current is AuthState.SignedIn) hooks.onSignedOut()
+                    holdForVerification(identity)
+                }
                 current is AuthState.SignedIn && current.userId == identity.uid -> Unit
                 else -> {
                     if (current is AuthState.SignedIn) hooks.onSignedOut()
@@ -69,7 +79,7 @@ class FirebaseAuthRepository(
 
         busy.withLock {
             val identity = backend.signIn(cleanEmail, password)
-            beginSession(identity)
+            if (identity.emailVerified) beginSession(identity) else holdForVerification(identity)
             repairMissingProfile(identity)
         }
     }
@@ -90,7 +100,37 @@ class FirebaseAuthRepository(
                 undoAccount()
                 throw if (e is CancellationException) e else e.asProfileFailure()
             }
-            beginSession(identity)
+            try {
+                backend.sendEmailVerification()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // The account exists; the person can use Resend on the next screen.
+                Log.w(TAG, "Could not send the verification email", e)
+            }
+            holdForVerification(identity)
+        }
+    }
+
+    override suspend fun resendVerification() {
+        backend.sendEmailVerification()
+    }
+
+    override suspend fun refreshVerification(): Boolean = busy.withLock {
+        val identity = backend.reload() ?: return@withLock false
+        if (!identity.emailVerified) return@withLock false
+        if (mutableState.value !is AuthState.SignedIn) beginSession(identity)
+        true
+    }
+
+    override suspend fun sendPasswordReset(email: String) {
+        val cleanEmail = email.trim()
+        AuthValidator.email(cleanEmail)?.let { throw AuthException(AuthErrorKind.INVALID_EMAIL, "Invalid email: $it") }
+        try {
+            backend.sendPasswordReset(cleanEmail)
+        } catch (e: AuthException) {
+            // Do not reveal whether an account exists for this address.
+            if (e.kind != AuthErrorKind.WRONG_CREDENTIALS) throw e
         }
     }
 
@@ -106,6 +146,11 @@ class FirebaseAuthRepository(
         val name = identity.displayName?.takeIf { it.isNotBlank() } ?: AuthValidator.usernameFromEmail(identity.email)
         hooks.onSignedIn(ActiveUser(userId = identity.uid, userName = name))
         mutableState.value = AuthState.SignedIn(identity.uid)
+    }
+
+    private fun holdForVerification(identity: AuthIdentity) {
+        val held = AuthState.AwaitingVerification(identity.email)
+        if (mutableState.value != held) mutableState.value = held
     }
 
     private suspend fun undoAccount() {

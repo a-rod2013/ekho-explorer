@@ -10,9 +10,21 @@ sealed class Screen(
         destination = "journal",
         title = "Journal"
     )
+
+    data object ObservationDetails : Screen(
+        destination = "journal/observation/{entryId}",
+        title = "Observation Details"
+    ) {
+        fun createRoute(entryId: String): String =
+            "journal/observation/${android.net.Uri.encode(entryId)}"
+    }
     data object Map : Screen(
         destination = "map",
         title = "Map"
+    )
+    data object Activity : Screen(
+        destination = "activity",
+        title = "Activity"
     )
     data object Action : Screen(
         destination = "action",
@@ -22,15 +34,42 @@ sealed class Screen(
         destination = "feed",
         title = "Feed"
     )
-//    data object Profile : Screen(
-//        destination = "profile",
-//        title = "Profile"
-//    )
+
+    data object Profile : Screen(
+        destination = "profile",
+        title = "Profile"
+    )
+
+    // Opened when tapping a user's avatar / username in the feed
+    data object UserProfile : Screen(
+        destination = "userProfile/{userId}",
+        title = "User Profile"
+    ) {
+        fun route(userId: String) = "userProfile/$userId"
+    }
+
+    // Opened from the settings menu on the profile page
+    data object UsernameChange : Screen(
+        destination = "usernameChange",
+        title = "Change username"
+    )
+
+    data object ChangePassword : Screen(
+        destination = "changePassword",
+        title = "Change password"
+    )
     // additional screens outside the main navigation bar
     data object Species : Screen(
         destination = "Species",
         title = "Species"
     )
+    data object SpeciesDetails : Screen(
+        destination = "species/{speciesId}",
+        title = "Species Details"
+    ) {
+        fun route(speciesId: Int) = "species/$speciesId"
+    }
+
     data object Notifications : Screen(
         destination = "notifications",
         title = "Notifications"
@@ -41,6 +80,31 @@ sealed class Screen(
         destination = "newPost",
         title = "New post"
     )
+
+    // Trails
+    data object AllTrails : Screen(
+        destination = "trails",
+        title = "Trails"
+    )
+
+    data object TrailWizard : Screen(
+        destination = "trailWizard",
+        title = "Create a trail"
+    )
+
+    data object TrailDetail : Screen(
+        destination = "trail/{trailId}",
+        title = "Trail"
+    ) {
+        fun route(trailId: String) = "trail/$trailId"
+    }
+
+    data object TrailEdit : Screen(
+        destination = "trail/{trailId}/edit",
+        title = "Edit trail"
+    ) {
+        fun route(trailId: String) = "trail/$trailId/edit"
+    }
 
     data object Camera : Screen(
         destination = "camera",

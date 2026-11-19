@@ -6,17 +6,15 @@ import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreService
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Comment
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.NotificationType
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
-import com.comp350sec001group2.ekhoexplorer.Business.Database.Pager
+import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreErrorKind
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetCommentVotesQuery
-import com.comp350sec001group2.ekhoexplorer.Business.Database.Queries.GetCommentsPageQuery
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Streams.ObserveCommentsStream
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.AddCommentTransaction
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Transactions.VoteOnCommentTransaction
 import com.comp350sec001group2.ekhoexplorer.Business.Notifications.NotificationService
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.map
 
 class FirestoreCommentRepository(
     private val service: FirestoreService,
@@ -25,28 +23,21 @@ class FirestoreCommentRepository(
     private val onCommentAdded: () -> Unit = {},
 ) : CommentRepository {
 
-    private val state = MutableStateFlow<List<Comment>>(emptyList())
+    private val live = LiveCommentList(
+        observe = { limit -> service.stream(ObserveCommentsStream(postId, limit)).map { it.value } },
+        loadVotes = { ids -> service.execute(GetCommentVotesQuery(EhkoCache.activeUser.userId, ids)) },
+        pageSize = PAGE_SIZE,
+    )
 
-    override val comments: Flow<List<Comment>> = combine(state, EhkoCache.activeUserFlow) { list, user ->
+    override val comments: Flow<List<Comment>> = combine(live.comments, EhkoCache.activeUserFlow) { list, user ->
         list.filterNot { user.isBlocked(it.userId) }
     }
 
-    private val more = MutableStateFlow(true)
-    override val hasMore: Flow<Boolean> = more.asStateFlow()
+    override val hasMore: Flow<Boolean> = live.hasMore
+    override val isLoading: Flow<Boolean> = live.isLoading
+    override val streamError: Flow<FirestoreErrorKind?> = live.error
 
-    private val pager = Pager { cursor -> service.execute(GetCommentsPageQuery(postId, PAGE_SIZE, cursor)) }
-
-    override suspend fun loadMore() {
-        val page = pager.loadNext()
-        more.value = pager.hasMore
-        if (page.isEmpty()) return
-        val votes = service.execute(GetCommentVotesQuery(EhkoCache.activeUser.userId, page.map { it.id }))
-        val fresh = page.map { it.copy(myVote = votes[it.id] ?: Vote.NONE) }
-        state.update { current ->
-            val known = current.mapTo(HashSet()) { it.id }
-            current + fresh.filter { it.id !in known }
-        }
-    }
+    override suspend fun loadMore() = live.showMore()
 
     // Store the comment, then show it at the end of the list (newest is last).
     override suspend fun add(text: String) {
@@ -62,23 +53,23 @@ class FirestoreCommentRepository(
             upCount = 0,
             downCount = 0,
         )
-        state.update { it + created }
+        live.addLocal(created)
         onCommentAdded()
         notifications.send(NotificationType.POST_COMMENT, postId = postId, preview = created.text, commentId = id)
     }
 
     // Up or down vote: update the screen immediately, then confirm with the database.
     override suspend fun vote(commentId: String, tapped: Vote) {
-        val original = state.value.firstOrNull { it.id == commentId } ?: return
-        replace(original.withVote(tapped))
+        val original = live.current(commentId) ?: return
+        live.beginVote(original, tapped)
         val result = try {
             service.execute(VoteOnCommentTransaction(postId, commentId, EhkoCache.activeUser.userId, tapped))
         } catch (e: FirestoreException) {
-            replace(original)
+            live.cancelVote(commentId)
             throw e
         }
+        live.confirmVote(commentId, result)
 
-        // Tell the comment's author about a new like, or take the notice back if the like was removed.
         if (result == Vote.UP) {
             notifications.send(
                 NotificationType.COMMENT_LIKE,
@@ -97,9 +88,5 @@ class FirestoreCommentRepository(
         }
     }
 
-    private fun replace(comment: Comment) =
-        state.update { list -> list.map { if (it.id == comment.id) comment else it } }
-
-    // Stays under the 30-id limit of GetCommentVotesQuery.
     private companion object { const val PAGE_SIZE = 20 }
 }

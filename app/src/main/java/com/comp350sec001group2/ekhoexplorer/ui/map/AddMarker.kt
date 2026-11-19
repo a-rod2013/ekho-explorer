@@ -23,6 +23,7 @@ fun AddMarker(
         scientificName: String,
         category: ObservationCategory,
         description: String,
+        visibility: String,
         photoUri: Uri
     ) -> Unit
 ) {
@@ -76,8 +77,7 @@ fun AddMarker(
             text = {
                 ObservationForm(
                     photoUri = photoUri!!,
-                    onSave = { commonName, scientificName, category, description ->
-
+                    onSave = { commonName, scientificName, category, description, visibility ->
                         // Send the observation details and photo to MapScreen
                         photoUri?.let { uri ->
                             onObservationSaved(
@@ -85,10 +85,10 @@ fun AddMarker(
                                 scientificName,
                                 category,
                                 description,
+                                visibility,
                                 uri
                             )
                         }
-
                         showForm = false
                     },
                     onCancel = {

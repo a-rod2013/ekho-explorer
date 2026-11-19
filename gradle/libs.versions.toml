@@ -13,6 +13,7 @@ navigationCompose = "2.10.2"
 room = "2.8.5"
 ksp = "2.3.10"
 workManager = "2.10.3"
+lifecycleCommon = "2.11.0"
 
 
 [libraries]
@@ -37,6 +38,7 @@ androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workManager" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
+androidx-lifecycle-common = { group = "androidx.lifecycle", name = "lifecycle-common", version.ref = "lifecycleCommon" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

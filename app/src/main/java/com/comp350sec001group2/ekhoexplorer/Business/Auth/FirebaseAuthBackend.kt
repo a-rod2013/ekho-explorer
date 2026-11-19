@@ -53,13 +53,32 @@ class FirebaseAuthBackend(
             AuthIdentity(user.uid, user.email, displayName)
         }
 
+    override suspend fun sendEmailVerification() {
+        guarded {
+            val user = auth.currentUser ?: throw AuthException(AuthErrorKind.UNKNOWN, "Nobody is signed in")
+            user.sendEmailVerification().await()
+        }
+    }
+
+    override suspend fun reload(): AuthIdentity? =
+        guarded {
+            val user = auth.currentUser ?: return@guarded null
+            user.reload().await()
+            auth.currentUser?.toIdentity()
+        }
+
+    override suspend fun sendPasswordReset(email: String) {
+        guarded { auth.sendPasswordResetEmail(email).await() }
+    }
+
     override suspend fun deleteCurrentAccount() {
         guarded { auth.currentUser?.delete()?.await() }
     }
 
     override fun signOut() = auth.signOut()
 
-    private fun FirebaseUser.toIdentity() = AuthIdentity(uid = uid, email = email, displayName = displayName)
+    private fun FirebaseUser.toIdentity() =
+        AuthIdentity(uid = uid, email = email, displayName = displayName, emailVerified = isEmailVerified)
 
     private suspend fun bestEffort(block: suspend () -> Unit) {
         withContext(NonCancellable) {

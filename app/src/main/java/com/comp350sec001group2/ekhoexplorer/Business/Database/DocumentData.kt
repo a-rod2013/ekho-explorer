@@ -4,6 +4,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.Blob
 import com.google.firebase.firestore.DocumentSnapshot
 import java.time.Instant
+import java.util.Date
 import kotlin.coroutines.cancellation.CancellationException
 
 class DocumentData(
@@ -53,6 +54,10 @@ class DocumentData(
     fun instant(name: String): Instant = instantOrNull(name) ?: missing(name)
     fun instantOrNull(name: String): Instant? = typed(name, "timestamp") {
         (it as? Timestamp)?.let { ts -> Instant.ofEpochSecond(ts.seconds, ts.nanoseconds.toLong()) }
+    }
+
+    fun dateOrNull(name: String): Date? = typed(name, "timestamp") {
+        (it as? Timestamp)?.toDate()
     }
 
 
