@@ -1,7 +1,9 @@
+
 package com.comp350sec001group2.ekhoexplorer.ui.map
 
-import android.location.Location
 import org.maplibre.android.geometry.LatLng
+import org.maplibre.android.maps.MapLibreMap
+import android.graphics.Point
 
 // Stores observations grouped at one location
 data class ObservationCluster(
@@ -14,39 +16,28 @@ data class ObservationCluster(
         get() = observations.size
 }
 
-// Calculate distance between two GPS locations
-fun distanceBetween(
-    first: LatLng,
-    second: LatLng
-): Float {
-    val results = FloatArray(1)
-
-    Location.distanceBetween(
-        first.latitude,
-        first.longitude,
-        second.latitude,
-        second.longitude,
-        results
-    )
-
-    return results[0]
-}
-
-// Group nearby observations within 10 meters
+// Groups observations that appear close together on the screen
 fun groupObservations(
     observations: List<ObservationMarker>,
-    radiusMeters: Float = 10f
+    map: MapLibreMap,
+    radiusPixels: Float = 60f
 ): List<ObservationCluster> {
 
     val groups = mutableListOf<MutableList<ObservationMarker>>()
 
     for (observation in observations) {
+        val point = map.projection.toScreenLocation(observation.location)
+
         val group = groups.firstOrNull { existing ->
-            existing.any {
-                distanceBetween(
-                    it.location,
-                    observation.location
-                ) <= radiusMeters
+            existing.any { other ->
+                val otherPoint = map.projection.toScreenLocation(other.location)
+
+                val dx = point.x - otherPoint.x
+                val dy = point.y - otherPoint.y
+
+                kotlin.math.sqrt(
+                    (dx * dx + dy * dy).toFloat()
+                ) <= radiusPixels
             }
         }
 

@@ -72,6 +72,7 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import org.maplibre.android.annotations.Marker
+import org.maplibre.android.annotations.Polyline
 
 
 
@@ -94,6 +95,10 @@ fun MapScreen(
         mutableStateOf(false)
     }
 
+    var cameraRevision by remember {
+        mutableStateOf(0)
+    }
+
     var map by remember {
         mutableStateOf<MapLibreMap?>(null)
     }
@@ -101,6 +106,11 @@ fun MapScreen(
     // Tracks the user's location marker
     var userLocationMarker by remember {
         mutableStateOf<Marker?>(null)
+    }
+
+    // Stores the user's latest GPS position
+    var currentUserLocation by remember {
+        mutableStateOf<LatLng?>(null)
     }
 
     // Stores observations added during this session
@@ -142,6 +152,11 @@ fun MapScreen(
     // Links grouped markers to their observations
     val markerClusters = remember {
         mutableStateMapOf<Long, ObservationCluster>()
+    }
+
+    // Stores lines connecting shifted markers to their GPS locations
+    val connectorLines = remember {
+        mutableStateListOf<Polyline>()
     }
 
     // Tracks the expanded cluster
@@ -247,6 +262,11 @@ fun MapScreen(
             getMapAsync { loadedMap ->
                 map = loadedMap
 
+                // Refresh observation clusters after zooming or moving
+                loadedMap.addOnCameraIdleListener {
+                    cameraRevision++
+                }
+
                 // Handle observation and cluster marker clicks
                 loadedMap.setOnMarkerClickListener { marker ->
                     val cluster = markerClusters[marker.id]
@@ -337,6 +357,7 @@ fun MapScreen(
                         location.latitude,
                         location.longitude
                     )
+                    currentUserLocation = position
 
                     if (userLocationMarker == null) {
                         userLocationMarker = currentMap.addMarker(
@@ -389,7 +410,10 @@ fun MapScreen(
                     map = currentMap,
                     observations = filteredObservations,
                     markerObservations = markerObservations,
-                    markerClusters = markerClusters
+                    markerClusters = markerClusters,
+                    userLocation = currentUserLocation,
+                    connectorLines = connectorLines
+
                 )
             }
 
@@ -457,7 +481,7 @@ fun MapScreen(
     }
 
     // Refresh map markers when search or filters change
-    LaunchedEffect(filteredObservations, mapStyleReady) {
+    LaunchedEffect(filteredObservations, mapStyleReady, cameraRevision, currentUserLocation) {
         if (!mapStyleReady) return@LaunchedEffect
 
         map?.let { currentMap ->
@@ -477,7 +501,9 @@ fun MapScreen(
                 map = currentMap,
                 observations = filteredObservations,
                 markerObservations = markerObservations,
-                markerClusters = markerClusters
+                markerClusters = markerClusters,
+                userLocation = currentUserLocation,
+                connectorLines = connectorLines
             )
         }
     }
