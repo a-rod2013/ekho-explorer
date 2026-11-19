@@ -8,8 +8,10 @@ import org.maplibre.android.maps.MapLibreMap
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
+import android.graphics.PointF
 
 // Displays observations around an expanded cluster
+
 fun expandCluster(
     context: Context,
     map: MapLibreMap,
@@ -19,17 +21,25 @@ fun expandCluster(
 
     val expandedMarkers = mutableListOf<Marker>()
     val count = cluster.count
-    // Distance between the cluster and expanded markers
-    val radius = 0.0004
+
+    // Space expanded markers 90dp from the center
+    val radius = (60 * context.resources.displayMetrics.density).toInt()
+    val center = map.projection.toScreenLocation(cluster.location)
 
     for ((index, observation) in cluster.observations.withIndex()) {
         val angle = 2 * PI * index / count
 
-        // Position markers around the cluster
-        val position = LatLng(
-            cluster.location.latitude + radius * sin(angle),
-            cluster.location.longitude + radius * cos(angle)
+        // Calculate the marker's display position in pixels
+        val offsetX = (radius * cos(angle)).toInt()
+        val offsetY = (radius * sin(angle)).toInt()
+
+        val point = android.graphics.PointF(
+            center.x + offsetX.toFloat(),
+            center.y + offsetY.toFloat()
         )
+
+        // Convert the display position back to a map location
+        val position = map.projection.fromScreenLocation(point)
 
         val icon = createObservationIcon(
             context = context,
@@ -43,6 +53,7 @@ fun expandCluster(
                 .icon(icon)
         )
 
+        // Keep the original observation and GPS location
         markerObservations[marker.id] = observation
         expandedMarkers.add(marker)
     }
