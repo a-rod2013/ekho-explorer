@@ -10,11 +10,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import java.io.File
+import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun AddMarker(
@@ -29,17 +29,16 @@ fun AddMarker(
 ) {
     val context = LocalContext.current
 
-    // Controls when the observation form is shown
-    var showForm by remember { mutableStateOf(false) }
-
-    // Stores the photo from the current observation
-    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var showForm by rememberSaveable { mutableStateOf(false) }
+    var photoUri by rememberSaveable {
+        mutableStateOf<String?>(null)
+    }
 
     // Opens the camera and saves the photo
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
-        if (success) {
+        if (success && photoUri != null) {
             Log.d("AddMarker", "Photo saved: $photoUri")
             showForm = true
         } else {
@@ -58,25 +57,25 @@ fun AddMarker(
             directory
         )
 
-        photoUri = FileProvider.getUriForFile(
+        val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
             photoFile
         )
-
-        cameraLauncher.launch(photoUri!!)
+        photoUri = uri.toString()
+        cameraLauncher.launch(uri)
     }) {
         Text("Add Marker")
     }
 
     // Shows the observation form after taking a photo
-    if (showForm) {
+    if (showForm && photoUri != null) {
         AlertDialog(
             onDismissRequest = { showForm = false },
             title = { Text("New Observation") },
             text = {
                 ObservationForm(
-                    photoUri = photoUri!!,
+                    photoUri = Uri.parse(photoUri),
                     onSave = { commonName, scientificName, category, description, visibility ->
                         // Send the observation details and photo to MapScreen
                         photoUri?.let { uri ->
@@ -86,7 +85,7 @@ fun AddMarker(
                                 category,
                                 description,
                                 visibility,
-                                uri
+                                Uri.parse(uri)
                             )
                         }
                         showForm = false
