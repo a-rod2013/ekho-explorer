@@ -1,4 +1,3 @@
-
 package com.comp350sec001group2.ekhoexplorer.ui.map
 
 import android.graphics.BitmapFactory
@@ -32,7 +31,8 @@ fun ObservationForm(
     ) -> Unit,
     onCancel: () -> Unit,
     showVisibility: Boolean = true,
-    saveButtonText: String = "Save Observation"
+    saveButtonText: String = "Save Observation",
+    saveError: Boolean = false
 ) {
     val context = LocalContext.current
 
@@ -212,6 +212,15 @@ fun ObservationForm(
             ) {
                 Text(saveButtonText)
             }
+        }
+        // Display an error when saving fails
+        if (saveError) {
+            Text(
+                text = "Unable to save observation. Check your location and try again.",
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }

@@ -18,13 +18,15 @@ import java.io.File
 
 @Composable
 fun AddMarker(
+    onLocationRequired: () -> Boolean,
     onObservationSaved: (
         commonName: String,
         scientificName: String,
         category: ObservationCategory,
         description: String,
         visibility: String,
-        photoUri: Uri
+        photoUri: Uri,
+        onResult: (Boolean) -> Unit
     ) -> Unit
 ) {
     val context = LocalContext.current
@@ -34,6 +36,9 @@ fun AddMarker(
 
     // Stores the photo from the current observation
     var photoUri by remember { mutableStateOf<Uri?>(null) }
+
+    // Tracks whether saving failed
+    var saveError by remember { mutableStateOf(false) }
 
     // Opens the camera and saves the photo
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -49,6 +54,10 @@ fun AddMarker(
 
     // Opens the camera with a new photo file
     Button(onClick = {
+        if (!onLocationRequired()) return@Button
+
+        saveError = false
+
         val directory = File(context.filesDir, "observations")
         directory.mkdirs()
 
@@ -77,8 +86,8 @@ fun AddMarker(
             text = {
                 ObservationForm(
                     photoUri = photoUri!!,
+                    saveError = saveError,
                     onSave = { commonName, scientificName, category, description, visibility ->
-                        // Send the observation details and photo to MapScreen
                         photoUri?.let { uri ->
                             onObservationSaved(
                                 commonName,
@@ -87,9 +96,15 @@ fun AddMarker(
                                 description,
                                 visibility,
                                 uri
-                            )
+                            ) { success ->
+                                if (success) {
+                                    saveError = false
+                                    showForm = false
+                                } else {
+                                    saveError = true
+                                }
+                            }
                         }
-                        showForm = false
                     },
                     onCancel = {
                         showForm = false
