@@ -21,7 +21,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -47,31 +46,39 @@ import com.comp350sec001group2.ekhoexplorer.ui.theme.EkhoExplorerTheme
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.ui.unit.dp
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Slider
+import androidx.compose.ui.platform.LocalContext
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.Location
+import android.location.LocationManager
+import android.os.Build
+import android.os.CancellationSignal
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material3.Button
+import kotlin.time.Duration.Companion.seconds
+import kotlin.math.roundToInt
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
 
-private fun matchesCategory(
-    species: SpeciesApiResult,
-    category: String
-): Boolean {
-    val taxon = species.category
-
-    return when (category) {
-        "Plants" -> taxon == "Plantae"
-        "Insects" -> taxon == "Insecta"
-        "Fungi" -> taxon == "Fungi"
-        "Animals" -> taxon in setOf(
-            "Animalia",
-            "Mammalia",
-            "Aves",
-            "Reptilia",
-            "Amphibia",
-            "Actinopterygii",
-            "Mollusca",
-            "Arachnida"
-        )
-        else -> true
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SpeciesSearchScreen(
     onBack: () -> Unit = {},
@@ -81,17 +88,81 @@ fun SpeciesSearchScreen(
     var searchText by rememberSaveable { mutableStateOf("") }
     var selectedCategory by rememberSaveable { mutableStateOf("All") }
 
+    var categoryExpanded by remember { mutableStateOf(false) }
+    var locationExpanded by remember { mutableStateOf(false) }
+    var taxonomyExpanded by remember { mutableStateOf(false) }
+    var selectedTaxonomy by rememberSaveable { mutableStateOf("All") }
+    var radiusMiles by rememberSaveable { mutableStateOf(5f) }
+    var customQuery by rememberSaveable { mutableStateOf("") }
+    var customPlaceId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var customLatitude by rememberSaveable { mutableStateOf<Double?>(null) }
+    var customLongitude by rememberSaveable { mutableStateOf<Double?>(null) }
+    var customPlaceName by rememberSaveable { mutableStateOf("") }
+    var placeSuggestions by remember { mutableStateOf<List<com.comp350sec001group2.ekhoexplorer.Business.Species.SpeciesPlace>>(emptyList()) }
+    var locationRequestVersion by remember { mutableStateOf(0) }
+    val context = LocalContext.current
+    var permissionDenied by remember { mutableStateOf(false) }
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        permissionDenied = permissions.values.none { it }
+        locationRequestVersion++
+    }
+    val taxonomyOptions = when (selectedCategory) {
+        "Animals" -> listOf("All", "Birds", "Mammals", "Reptiles", "Amphibians", "Fish")
+        "Plants" -> listOf("All", "Flowering Plants", "Conifers", "Ferns", "Mosses")
+        "Insects" -> listOf("All", "Butterflies & Moths", "Beetles", "Bees & Wasps", "Flies", "Dragonflies")
+        "Fungi" -> listOf("All", "Mushroom-forming fungi", "Lichen-forming fungi", "Yeasts")
+        else -> listOf("All")
+    }
+    val scientificTaxon = when (selectedTaxonomy) {
+        "Birds" -> "Aves"; "Mammals" -> "Mammalia"; "Reptiles" -> "Reptilia"
+        "Amphibians" -> "Amphibia"; "Fish" -> "Actinopterygii"
+        "Flowering Plants" -> "Angiospermae"; "Conifers" -> "Pinopsida"
+        "Ferns" -> "Polypodiopsida"; "Mosses" -> "Bryophyta"
+        "Butterflies & Moths" -> "Lepidoptera"; "Beetles" -> "Coleoptera"
+        "Bees & Wasps" -> "Hymenoptera"; "Flies" -> "Diptera"
+        "Dragonflies" -> "Odonata"
+        "Mushroom-forming fungi" -> "Agaricomycetes"
+        "Lichen-forming fungi" -> "Lecanoromycetes"
+        "Yeasts" -> "Saccharomycetes"
+        else -> null
+    }
+
+    var showFilters by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var selectedLocation by rememberSaveable { mutableStateOf("Anywhere") }
+
     var speciesResults by remember {
         mutableStateOf<List<SpeciesApiResult>>(emptyList())
     }
 
     var isLoading by remember { mutableStateOf(false) }
+    var usedNearbyFallback by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     val apiService = remember { SpeciesApiService() }
 
 
-    LaunchedEffect(searchText, selectedCategory) {
+    LaunchedEffect(selectedLocation, customQuery) {
+        if (selectedLocation == "Custom" && customQuery.trim().length >= 2 && customPlaceId == null) {
+            delay(450)
+            try {
+                placeSuggestions = apiService.searchPlaces(customQuery)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Exception) {
+                placeSuggestions = emptyList()
+            }
+        } else {
+            placeSuggestions = emptyList()
+        }
+    }
+
+    LaunchedEffect(searchText, selectedCategory, selectedLocation, selectedTaxonomy,
+        radiusMiles, customPlaceId, locationRequestVersion) {
         val query = searchText.trim()
 
         // Wait until the user finishes typing.
@@ -105,7 +176,7 @@ fun SpeciesSearchScreen(
             return@LaunchedEffect
         }
 
-        if (query.isEmpty() && selectedCategory == "All") {
+        if (query.isEmpty() && selectedCategory == "All" && selectedTaxonomy == "All" && selectedLocation == "Anywhere") {
             speciesResults = emptyList()
             isLoading = false
             errorMessage = null
@@ -114,12 +185,60 @@ fun SpeciesSearchScreen(
 
         isLoading = true
         errorMessage = null
+        usedNearbyFallback = false
 
         try {
-            val results = if (query.isEmpty()) {
-                apiService.browseSpecies(selectedCategory)
-            } else {
-                apiService.searchSpecies(query)
+            val placeId = when (selectedLocation) {
+                "Custom" -> customPlaceId
+                    ?: throw IllegalStateException(
+                        "Choose a location from the Custom search results."
+                    )
+                else -> null
+            }
+            val coordinates = when (selectedLocation) {
+                "Near CSUCI Campus" -> 34.1630 to -119.0426
+                "Near Me" -> {
+                    val permissionGranted = hasLocationPermission(context)
+                    if (!permissionGranted) {
+                        if (!permissionDenied) {
+                            locationPermissionLauncher.launch(arrayOf(
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            ))
+                        }
+                        throw IllegalStateException("Allow location access to search Near Me.")
+                    }
+                    val location = currentLocation(context)
+                        ?: throw IllegalStateException("Device location unavailable. Enable Location and try again.")
+                    location.latitude to location.longitude
+                }
+                else -> null
+            }
+            var results = apiService.browseSpecies(
+                category = selectedCategory,
+                placeId = placeId,
+                latitude = coordinates?.first,
+                longitude = coordinates?.second,
+                radius = (radiusMiles * 1.609344f).roundToInt(),
+                taxonomy = scientificTaxon,
+                query = query
+            )
+            if (
+                selectedLocation == "Custom" &&
+                results.isEmpty() &&
+                customLatitude != null &&
+                customLongitude != null
+            ) {
+                results = apiService.browseSpecies(
+                    category = selectedCategory,
+                    latitude = customLatitude,
+                    longitude = customLongitude,
+                    radius = 16,
+                    taxonomy = scientificTaxon,
+                    query = query
+                )
+
+                usedNearbyFallback = results.isNotEmpty()
             }
 
             speciesResults = results
@@ -133,35 +252,14 @@ fun SpeciesSearchScreen(
         }
     }
 
-    val filteredSpecies = speciesResults.filter {
-        matchesCategory(it, selectedCategory)
-    }
+    val filteredSpecies = speciesResults
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = AppStyle.colors.background,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
 
-        topBar = {
-            if (showSearchField) {
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            horizontal = AppStyle.dimens.md,
-                            vertical = AppStyle.dimens.sm
-                        ),
-                    label = {
-                        Text("Search by common or scientific name")
-                    },
-                    singleLine = true,
-                    shape = MaterialTheme.shapes.small
-                )
-            }
-        }
-    ) { padding ->
+        ) { padding ->
 
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -174,45 +272,254 @@ fun SpeciesSearchScreen(
             horizontalArrangement = Arrangement.spacedBy(AppStyle.dimens.md),
             verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.md)
         ) {
-
             item(span = { GridItemSpan(maxLineSpan) }) {
                 Column {
-                    Text(
-                        text = "Explore Categories",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = AppStyle.colors.textPrimary
-                    )
-
-                    Spacer(
-                        modifier = Modifier.height(AppStyle.dimens.sm)
-                    )
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
                     ) {
-                        listOf("Plants", "Animals", "Insects", "Fungi")
-                            .forEach { category ->
-                                FilterChip(
-                                    selected = selectedCategory == category,
-                                    onClick = {
-                                        selectedCategory =
-                                            if (selectedCategory == category) {
-                                                "All"
-                                            } else {
-                                                category
-                                            }
-                                    },
-                                    label = {
-                                        Text(category)
-                                    }
-                                )
-                            }
+                        OutlinedTextField(
+                            value = searchText,
+                            onValueChange = { searchText = it },
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(56.dp),
+                            placeholder = { Text("Search species...") },
+                            singleLine = true,
+                            shape = MaterialTheme.shapes.medium
+                        )
+                        Button(
+                            onClick = { showFilters = !showFilters },
+                            modifier = Modifier.height(56.dp)
+                        ) {
+                            Text("Filters")
+
+                            Icon(
+                                imageVector = if (showFilters) {
+                                    Icons.Filled.KeyboardArrowUp
+                                } else {
+                                    Icons.Filled.KeyboardArrowDown
+                                },
+                                contentDescription = null
+                            )
+                        }
                     }
 
-                    Spacer(
-                        modifier = Modifier.height(AppStyle.dimens.md)
+                    AnimatedVisibility(
+                        visible = showFilters,
+                        enter = expandVertically(),
+                        exit = shrinkVertically()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = AppStyle.dimens.md, bottom = AppStyle.dimens.sm),
+                            verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
+                        ) {
+                            Text(
+                                text = "Filter Species",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Category", style = MaterialTheme.typography.labelMedium)
+                                    ExposedDropdownMenuBox(
+                                        expanded = categoryExpanded,
+                                        onExpandedChange = { categoryExpanded = !categoryExpanded }
+                                    ) {
+                                        OutlinedTextField(
+                                            value = selectedCategory,
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            singleLine = true,
+                                            trailingIcon = {
+                                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                                            },
+                                            modifier = Modifier
+                                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                                .fillMaxWidth()
+                                        )
+                                        ExposedDropdownMenu(
+                                            expanded = categoryExpanded,
+                                            onDismissRequest = { categoryExpanded = false }
+                                        ) {
+                                            listOf("All", "Animals", "Plants", "Insects", "Fungi")
+                                                .forEach { option ->
+                                                    DropdownMenuItem(
+                                                        text = { Text(option) },
+                                                        onClick = {
+                                                            selectedCategory = option
+                                                            selectedTaxonomy = "All"
+                                                            categoryExpanded = false
+                                                        }
+                                                    )
+                                                }
+                                        }
+                                    }
+                                }
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Location", style = MaterialTheme.typography.labelMedium)
+                                    ExposedDropdownMenuBox(
+                                        expanded = locationExpanded,
+                                        onExpandedChange = { locationExpanded = !locationExpanded }
+                                    ) {
+                                        OutlinedTextField(
+                                            value = selectedLocation,
+                                            onValueChange = {},
+                                            readOnly = true,
+                                            singleLine = true,
+                                            trailingIcon = {
+                                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = locationExpanded)
+                                            },
+                                            modifier = Modifier
+                                                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                                .fillMaxWidth()
+                                        )
+                                        ExposedDropdownMenu(
+                                            expanded = locationExpanded,
+                                            onDismissRequest = { locationExpanded = false }
+                                        ) {
+                                            listOf("Anywhere",
+                                                "Near Me",
+                                                "Near CSUCI Campus",
+                                                "Custom")
+                                                .forEach { option ->
+                                                    DropdownMenuItem(
+                                                        text = { Text(option) },
+                                                        onClick = {
+                                                            selectedLocation = option
+                                                            locationExpanded = false
+                                                        }
+                                                    )
+                                                }
+                                        }
+                                    }
+                                }
+                            }
+                            if (selectedLocation == "Near Me" ||
+                                selectedLocation == "Near CSUCI Campus"
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "Search radius",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+
+                                    Text(
+                                        text = "${radiusMiles.roundToInt()} miles",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                }
+
+                                val radiusOptions = listOf(5f, 10f, 20f, 30f, 40f, 50f)
+
+                                Slider(
+                                    value = radiusOptions.indexOf(radiusMiles)
+                                        .coerceAtLeast(0).toFloat(),
+                                    onValueChange = {
+                                        radiusMiles = radiusOptions[it.roundToInt().coerceIn(0, 5)]
+                                    },
+                                    valueRange = 0f..5f,
+                                    steps = 4,
+                                    thumb = {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(16.dp)
+                                                .background(
+                                                    MaterialTheme.colorScheme.primary,
+                                                    CircleShape
+                                                )
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
+                            if (selectedLocation == "Custom") {
+                                OutlinedTextField(
+                                    value = customQuery,
+                                    onValueChange = {
+                                        customQuery = it
+                                        customPlaceId = null
+                                        customPlaceName = ""
+                                        customLatitude = null
+                                        customLongitude = null
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    label = { Text("Find a city, county, or place") },
+                                    singleLine = true
+                                )
+                                placeSuggestions.forEach { place ->
+                                    TextButton(onClick = {
+                                        customPlaceId = place.id
+                                        customPlaceName = place.name
+                                        customLatitude = place.latitude
+                                        customLongitude = place.longitude
+                                        customQuery = place.name
+                                        placeSuggestions = emptyList()
+                                    }) { Text(place.name) }
+                                }
+                                if (customPlaceId != null) Text("Selected: $customPlaceName")
+                            }
+                            Text("Taxonomy", style = MaterialTheme.typography.labelMedium)
+                            ExposedDropdownMenuBox(
+                                expanded = taxonomyExpanded,
+                                onExpandedChange = { taxonomyExpanded = !taxonomyExpanded },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                OutlinedTextField(
+                                    value = selectedTaxonomy,
+                                    onValueChange = {},
+                                    readOnly = true,
+                                    enabled = selectedCategory != "All",
+                                    singleLine = true,
+                                    trailingIcon = {
+                                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = taxonomyExpanded)
+                                    },
+                                    modifier = Modifier
+                                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                        .fillMaxWidth()
+                                )
+                                ExposedDropdownMenu(
+                                    expanded = taxonomyExpanded,
+                                    onDismissRequest = { taxonomyExpanded = false }
+                                ) {
+                                    taxonomyOptions.forEach { option ->
+                                        DropdownMenuItem(
+                                            text = { Text(option) },
+                                            onClick = {
+                                                selectedTaxonomy = option
+                                                taxonomyExpanded = false
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(AppStyle.dimens.sm))
+                    Text(
+                        text = "${selectedCategory} · ${if (selectedLocation == "Custom") customPlaceName.ifBlank { "Custom" } else selectedLocation}${if (selectedTaxonomy != "All") " · $selectedTaxonomy" else ""}",
+                        style = AppStyle.type.caption,
+                        color = AppStyle.colors.textSecondary
                     )
+                    Spacer(modifier = Modifier.height(AppStyle.dimens.sm))
+
+                    if (usedNearbyFallback && selectedLocation == "Custom") {
+                        Text(
+                            text = "Showing species within 10 miles of $customPlaceName",
+                            style = AppStyle.type.caption,
+                            color = AppStyle.colors.textSecondary
+                        )
+                        Spacer(modifier = Modifier.height(AppStyle.dimens.sm))
+                    }
 
                     Text(
                         text = "Species Results",
@@ -251,15 +558,15 @@ fun SpeciesSearchScreen(
 
             } else if (
                 searchText.isBlank() &&
-                selectedCategory == "All"
+                selectedCategory == "All" &&
+                selectedLocation == "Anywhere"
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
-                        text = "Search by name or select a category to explore.",
+                        text = "Search species or select a filter.",
                         color = AppStyle.colors.textSecondary
                     )
                 }
-
             } else if (filteredSpecies.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
@@ -341,6 +648,39 @@ fun SpeciesSearchScreen(
             }
         }
     }
+}
+
+private fun hasLocationPermission(context: Context): Boolean =
+    context.checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+        context.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+private suspend fun currentLocation(context: Context): Location? {
+    if (!hasLocationPermission(context)) return null
+    val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    val providers = listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)
+        .filter { manager.isProviderEnabled(it) }
+    if (providers.isEmpty()) return null
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        for (provider in providers) {
+            val current = withTimeoutOrNull(10.seconds) {
+                suspendCancellableCoroutine<Location?> { continuation ->
+                    val signal = CancellationSignal()
+                    continuation.invokeOnCancellation { signal.cancel() }
+                    try {
+                        manager.getCurrentLocation(provider, signal, context.mainExecutor) { found ->
+                            if (continuation.isActive) continuation.resume(found)
+                        }
+                    } catch (e: SecurityException) {
+                        if (continuation.isActive) continuation.resume(null)
+                    }
+                }
+            }
+            if (current != null) return current
+        }
+    }
+    return providers.mapNotNull { provider ->
+        try { manager.getLastKnownLocation(provider) } catch (_: SecurityException) { null }
+    }.maxByOrNull { it.time }
 }
 
 @Preview(showBackground = true, showSystemUi = true)
