@@ -130,7 +130,9 @@ class SpeciesApiService {
             if (latitude != null && longitude != null) {
                 append("&lat=$latitude&lng=$longitude&radius=$radius")
             }
-            if (search.isNotBlank()) append("&q=${URLEncoder.encode(search, "UTF-8")}")
+            if (search.isNotBlank()) {
+                append("&q=${URLEncoder.encode(search, "UTF-8")}&search_on=names")
+            }
         }
 
         val results = JSONObject(getResponse(URL(url))).getJSONArray("results")
