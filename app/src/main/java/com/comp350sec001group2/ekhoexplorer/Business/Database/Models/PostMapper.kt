@@ -16,5 +16,6 @@ object PostMapper : DocumentReader<Post> {
         userId = doc.stringOrNull(PostFields.USER_ID) ?: "",
         commentCount = doc.longOrNull(PostFields.COMMENT_COUNT)?.toInt() ?: 0,
         photoCount = doc.longOrNull(PostFields.PHOTO_COUNT)?.toInt() ?: 0,
+        createdAtMillis = doc.dateOrNull(PostFields.CREATED_AT)?.time ?: 0L,
     )
 }

@@ -1,6 +1,5 @@
 package com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.views
 
-import com.comp350sec001group2.ekhoexplorer.ui.components.AccountMenu
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -430,6 +430,53 @@ fun ProfileScreenContent(
                             )
                         }
                     }
+                }
+            }
+
+            // Divider between profile information and published feed posts.
+            item(span = { GridItemSpan(3) }) {
+                HorizontalDivider(
+                    color = AppStyle.colors.divider
+                )
+            }
+
+            // Displays feed posts published by the account.
+            items(
+                items = uiState.posts,
+                key = { post -> post.id }
+            ) { post ->
+                ProfilePostThumbnail(
+                    post = post,
+                    onClick = {
+                        onPostClick(post)
+                    }
+                )
+            }
+
+            if (uiState.isLoadingPosts) {
+                item(span = { GridItemSpan(3) }) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(AppStyle.dimens.lg),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = AppStyle.colors.accent
+                        )
+                    }
+                }
+            }
+
+            uiState.postsErrorMessage?.let { message ->
+                item(span = { GridItemSpan(3) }) {
+                    Text(
+                        text = message,
+                        modifier = Modifier.padding(16.dp),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall
+                    )
                 }
             }
         }

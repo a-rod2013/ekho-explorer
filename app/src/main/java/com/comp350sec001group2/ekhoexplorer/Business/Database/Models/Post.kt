@@ -19,6 +19,8 @@ data class Post(
 
     /** Photos stored in Firestore for this post. 0 for posts that use [imageUrls] instead. */
     val photoCount: Int = 0,
+
+    val createdAtMillis: Long = 0L,
 ) {
     /** Returns the post after the user taps [tapped], Tapping the active vote clears it. */
     fun withVote(tapped: Vote): Post {

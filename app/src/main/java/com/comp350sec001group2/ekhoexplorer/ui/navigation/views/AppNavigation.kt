@@ -19,6 +19,7 @@ import androidx.navigation.navigation
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.AuthState
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
 import com.comp350sec001group2.ekhoexplorer.ui.components.AppHeader
 import com.comp350sec001group2.ekhoexplorer.ui.map.MapScreen
 import com.comp350sec001group2.ekhoexplorer.ui.navigation.models.AUTH_ROUTE
@@ -398,9 +399,16 @@ private fun AppNavHost(
                         },
                         onSignOut = onSignOut,
                         onUserClick = { userId ->
-                            navController.navigate(
-                                Screen.UserProfile.route(userId)
-                            )
+                            val activeUserId = EhkoCache.activeUser.userId
+                            if (activeUserId.isNotBlank() && userId == activeUserId) {
+                                navController.navigate(Screen.Profile.destination) {
+                                    launchSingleTop = true
+                                }
+                            } else {
+                                navController.navigate(
+                                    Screen.UserProfile.route(userId)
+                                )
+                            }
                         }
                     )
                 }
