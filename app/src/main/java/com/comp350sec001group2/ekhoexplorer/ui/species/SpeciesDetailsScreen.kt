@@ -37,7 +37,8 @@ fun SpeciesDetailsScreen(
     speciesId: Int,
     onBack: () -> Unit
 ) {
-    val apiService = remember { SpeciesApiService() }
+    val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    val apiService = remember { (appContext as com.comp350sec001group2.ekhoexplorer.EkhoApp).container.speciesApi }
 
     var species by remember(speciesId) {
         mutableStateOf<SpeciesApiResult?>(null)

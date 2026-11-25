@@ -88,7 +88,8 @@ fun SpeciesSearchScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    val apiService = remember { SpeciesApiService() }
+    val appContext = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    val apiService = remember { (appContext as com.comp350sec001group2.ekhoexplorer.EkhoApp).container.speciesApi }
 
 
     LaunchedEffect(searchText, selectedCategory) {

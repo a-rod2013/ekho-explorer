@@ -1,6 +1,7 @@
 package com.comp350sec001group2.ekhoexplorer.Business.Species
 
 import android.text.Html
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.TtlTextCache
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
@@ -23,7 +24,7 @@ data class SpeciesApiResult(
     val description: String?
 )
 
-class SpeciesApiService {
+class SpeciesApiService(private val diskCache: TtlTextCache? = null) {
 
     private val baseUrl = "https://api.inaturalist.org/v1/taxa"
     private val browseUrl =
@@ -142,7 +143,22 @@ class SpeciesApiService {
             parseSpecies(results.getJSONObject(0))
         }
 
-    private suspend fun getResponse(url: URL): String =
+    private suspend fun getResponse(url: URL): String {
+        val key = sha1(url.toString())
+        val ttl = if (url.path.matches(Regex(".*/taxa/[0-9]+\$"))) THIRTY_DAYS_MS else ONE_DAY_MS
+        diskCache?.let { cache ->
+            withContext(Dispatchers.IO) { cache.get(ttl, "species", key) }?.let { return it }
+        }
+        val body = fetch(url)
+        diskCache?.let { cache -> withContext(Dispatchers.IO) { cache.put(body, "species", key) } }
+        return body
+    }
+
+    private fun sha1(text: String): String =
+        java.security.MessageDigest.getInstance("SHA-1").digest(text.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+
+    private suspend fun fetch(url: URL): String =
         requestMutex.withLock {
 
             // Wait before sending another API request.
@@ -224,3 +240,6 @@ class SpeciesApiService {
         )
     }
 }
+
+private const val ONE_DAY_MS = 24L * 60 * 60 * 1000
+private const val THIRTY_DAYS_MS = 30L * ONE_DAY_MS

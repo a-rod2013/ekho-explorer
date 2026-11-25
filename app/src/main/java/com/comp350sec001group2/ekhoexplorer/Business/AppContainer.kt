@@ -19,7 +19,17 @@ import com.comp350sec001group2.ekhoexplorer.Business.Auth.FirestoreSupportReposi
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.SupportRepository
 import com.comp350sec001group2.ekhoexplorer.Business.Auth.SessionHooks
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.ActiveUser
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.ByteCache
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories.FirestoreJournalCardRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Journal.Cards.JournalCardRepository
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.AndroidPhotoEncoder
+import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoLimits
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.NoByteCache
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.PendingCacheClear
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.SharedPrefsFlagStore
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.TtlTextCache
+import com.comp350sec001group2.ekhoexplorer.Business.Species.SpeciesApiService
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Batches.SeedFeedPostsBatch
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreException
 import com.comp350sec001group2.ekhoexplorer.Business.Database.FirestoreService
@@ -65,10 +75,17 @@ import com.google.firebase.Firebase
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
+class AppContainer(
+    context: Context,
+    photoCache: PhotoCache = NoPhotoCache,
+    val byteCache: ByteCache = NoByteCache,
+) {
+    private val appContext = context.applicationContext
+
     private val service = FirestoreService(Firebase.firestore)
     suspend fun getUserProfile(userId: String): UserProfile? {
         return service.execute(GetUserProfileQuery(userId))
@@ -161,13 +178,23 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
     val observationPhotoRepository: PhotoRepository = CachedPhotoRepository(FirestoreObservationPhotoStore(service))
     val photoPreparer = PhotoPreparer()
 
+    val speciesApi = SpeciesApiService(TtlTextCache(byteCache))
+
     val feedRepository: FeedRepository = FirestoreFeedRepository(service, notificationService, photoRepository)
 
     val observationRepository: ObservationRepository = FirestoreObservationRepository(service)
 
+    private val thumbnailLimits = PhotoLimits(maxEdgePx = 480, targetBytes = 30_000, hardCapBytes = 60_000)
+    val journalCardRepository: JournalCardRepository = FirestoreJournalCardRepository(
+        service = service,
+        photoPreparer = photoPreparer,
+        thumbnailPreparer = PhotoPreparer(AndroidPhotoEncoder(thumbnailLimits), thumbnailLimits),
+        byteCache = byteCache,
+    )
+
     val userRelationsRepository: UserRelationsRepository = FirestoreUserRelationsRepository(service)
 
-    val trailRepository: TrailRepository = FirestoreTrailRepository(service)
+    val trailRepository: TrailRepository = FirestoreTrailRepository(service, byteCache)
 
     val walkSession = WalkSession(FileWalkStore(java.io.File(context.filesDir, "trail_walk.csv")))
 
@@ -221,6 +248,9 @@ class AppContainer(context: Context, photoCache: PhotoCache = NoPhotoCache) {
             override suspend fun onSignedOut() {
                 feedRepository.clear()
                 trailRepository.clear()
+                journalCardRepository.clear()
+                withContext(Dispatchers.IO) { byteCache.clear() }
+                PendingCacheClear(SharedPrefsFlagStore(appContext)).request()
                 EhkoCache.clear()
             }
         },

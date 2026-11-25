@@ -1,7 +1,10 @@
 package com.comp350sec001group2.ekhoexplorer.Business.Database.Repositories
 
 import android.util.Log
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.ByteCache
 import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.NoByteCache
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.cached
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Batches.CreateTrailBatch
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.DeleteTrailCommand
 import com.comp350sec001group2.ekhoexplorer.Business.Database.Commands.PurgeReviewHeartsCommand
@@ -34,7 +37,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class FirestoreTrailRepository(private val service: FirestoreService) : TrailRepository {
+class FirestoreTrailRepository(
+    private val service: FirestoreService,
+    private val byteCache: ByteCache = NoByteCache,
+) : TrailRepository {
 
     private val state = MutableStateFlow<List<Trail>>(emptyList())
     override val trails: StateFlow<List<Trail>> = state.asStateFlow()
@@ -59,6 +65,7 @@ class FirestoreTrailRepository(private val service: FirestoreService) : TrailRep
 
     override suspend fun update(trailId: String, input: TrailInput, requestVerification: Boolean, photos: List<EncodedPhoto>?) {
         service.execute(UpdateTrailTransaction(trailId, user, input, requestVerification, photos))
+        if (photos != null) forgetOwnerPhotos(trailId)
         reload(trailId)
     }
 
@@ -69,6 +76,7 @@ class FirestoreTrailRepository(private val service: FirestoreService) : TrailRep
 
     override suspend fun delete(trailId: String) {
         service.execute(DeleteTrailCommand(trailId, user))
+        byteCache.remove("trails", trailId)
         state.update { list -> list.filterNot { it.id == trailId } }
     }
 
@@ -76,12 +84,15 @@ class FirestoreTrailRepository(private val service: FirestoreService) : TrailRep
 
     override suspend fun saveReview(trailId: String, rating: Int, caption: String, photos: List<EncodedPhoto>?) {
         service.execute(SaveTrailReviewTransaction(trailId, user.userId, user.userName, rating, caption, photos))
+        if (photos != null) byteCache.remove("trails", trailId, "r_${user.userId}")
         reload(trailId)
     }
 
     override suspend fun deleteReview(trailId: String, reviewId: String) {
         service.execute(DeleteTrailReviewTransaction(trailId, reviewId, user))
-        // The review is gone; clearing its hearts is tidying, so a failure here does not undo the delete.
+        // ===== JOURNAL A2: forget the deleted review's cached pictures: begin =====
+        byteCache.remove("trails", trailId, "r_$reviewId")
+
         try {
             service.execute(PurgeReviewHeartsCommand(trailId, reviewId))
         } catch (e: FirestoreException) {
@@ -104,11 +115,17 @@ class FirestoreTrailRepository(private val service: FirestoreService) : TrailRep
     override suspend fun viewerState(trailId: String): TrailViewerState =
         service.execute(GetTrailViewerStateQuery(trailId, user.userId))
 
+    private fun forgetOwnerPhotos(trailId: String) {
+        for (index in 0 until 5) byteCache.remove("trails", trailId, "p$index")
+    }
+
     override suspend fun loadTrailPhoto(trailId: String, index: Int): ByteArray? =
-        service.execute(GetTrailPhotoQuery(trailId, index))?.bytes
+        byteCache.cached("trails", trailId, "p$index") { service.execute(GetTrailPhotoQuery(trailId, index))?.bytes }
 
     override suspend fun loadReviewPhoto(trailId: String, reviewId: String, index: Int): ByteArray? =
-        service.execute(GetTrailReviewPhotoQuery(trailId, reviewId, index))?.bytes
+        byteCache.cached("trails", trailId, "r_$reviewId", index.toString()) {
+            service.execute(GetTrailReviewPhotoQuery(trailId, reviewId, index))?.bytes
+        }
 
     override suspend fun clear() {
         state.value = emptyList()
