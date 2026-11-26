@@ -593,28 +593,25 @@ fun MapScreen(
             verticalArrangement = Arrangement.spacedBy(AppStyle.dimens.sm)
         ) {
 
-
-
-
-
             // Add an observation
             AddMarker(
-                onObservationSaved = {
-                        commonName,
-                        scientificName,
-                        category,
-                        description,
-                        visibility,
-                        photoUri ->
+                onLocationRequired = {
+                    if (context.hasAnyLocationPermission()) {
+                        true
+                    } else {
+                        hasLocationPermission = false
+                        permissionRequestFinished = true
+                        appLocationPermissionsDialogDismissed = false
+                        false
+                    }
+                },
+                onObservationSaved = { commonName, scientificName, category, description, visibility, photoUri, onResult ->
 
                     // Get the phone's current GPS location
                     getObservationLocation(context) { location ->
                         if (location == null) {
-                            Log.e(
-                                "EkhoMap",
-                                "Could not save observation: location unavailable or permission missing"
-                            )
-
+                            Log.e("EkhoMap", "Could not save observation: location unavailable or permission missing")
+                            onResult(false)
                             return@getObservationLocation
                         }
 
@@ -694,6 +691,7 @@ fun MapScreen(
                                         "MapJournal",
                                         "Journal entry saved: ${journalEntry.id}"
                                     )
+                                    onResult(true)
 
                                 } catch (e: Exception) {
                                     Log.e(
@@ -701,6 +699,7 @@ fun MapScreen(
                                         "Failed to save observation to Journal",
                                         e
                                     )
+                                    onResult(false)
                                 }
                             }
                         } else {
@@ -708,6 +707,7 @@ fun MapScreen(
                                 "MapJournal",
                                 "Observation not saved to Journal: user is signed out"
                             )
+                            onResult(false)
                         }
 
 

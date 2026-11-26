@@ -18,13 +18,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 
 @Composable
 fun AddMarker(
+    onLocationRequired: () -> Boolean,
     onObservationSaved: (
         commonName: String,
         scientificName: String,
         category: ObservationCategory,
         description: String,
         visibility: String,
-        photoUri: Uri
+        photoUri: Uri,
+        onResult: (Boolean) -> Unit
     ) -> Unit
 ) {
     val context = LocalContext.current
@@ -33,6 +35,9 @@ fun AddMarker(
     var photoUri by rememberSaveable {
         mutableStateOf<String?>(null)
     }
+
+    // Tracks whether saving failed
+    var saveError by remember { mutableStateOf(false) }
 
     // Opens the camera and saves the photo
     val cameraLauncher = rememberLauncherForActivityResult(
@@ -48,6 +53,10 @@ fun AddMarker(
 
     // Opens the camera with a new photo file
     Button(onClick = {
+        if (!onLocationRequired()) return@Button
+
+        saveError = false
+
         val directory = File(context.filesDir, "observations")
         directory.mkdirs()
 
@@ -75,9 +84,9 @@ fun AddMarker(
             title = { Text("New Observation") },
             text = {
                 ObservationForm(
-                    photoUri = Uri.parse(photoUri),
+                    photoUri = photoUri!!,
+                    saveError = saveError,
                     onSave = { commonName, scientificName, category, description, visibility ->
-                        // Send the observation details and photo to MapScreen
                         photoUri?.let { uri ->
                             onObservationSaved(
                                 commonName,
@@ -85,10 +94,16 @@ fun AddMarker(
                                 category,
                                 description,
                                 visibility,
-                                Uri.parse(uri)
-                            )
+                                uri
+                            ) { success ->
+                                if (success) {
+                                    saveError = false
+                                    showForm = false
+                                } else {
+                                    saveError = true
+                                }
+                            }
                         }
-                        showForm = false
                     },
                     onCancel = {
                         showForm = false
