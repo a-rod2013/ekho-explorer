@@ -9,6 +9,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.comp350sec001group2.ekhoexplorer.Business.AppContainer
+import com.comp350sec001group2.ekhoexplorer.Business.Cache.EhkoCache
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Post
+import com.comp350sec001group2.ekhoexplorer.Business.Database.Models.Vote
 import com.comp350sec001group2.ekhoexplorer.Business.Photos.PhotoLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -60,7 +63,6 @@ class UserProfileViewModel(
 
                 loadAvatar()
                 loadUserPosts()
-                observeJournalCount()
 
             } catch (e: CancellationException) {
                 throw e
@@ -71,15 +73,39 @@ class UserProfileViewModel(
         }
     }
 
-    private fun observeJournalCount() {
+    fun onPostVote(postId: String, vote: Vote) {
+        val currentPosts = uiState.posts
+        val targetPost = currentPosts.firstOrNull { it.id == postId } ?: return
+
+        val oldVote = targetPost.myVote
+        val newVote = if (oldVote == vote) Vote.NONE else vote
+
+        var upDelta = 0
+        var downDelta = 0
+
+        if (oldVote == Vote.UP) upDelta -= 1
+        if (oldVote == Vote.DOWN) downDelta -= 1
+
+        if (newVote == Vote.UP) upDelta += 1
+        if (newVote == Vote.DOWN) downDelta += 1
+
+        val updatedPosts = currentPosts.map { post ->
+            if (post.id == postId) {
+                post.copy(
+                    myVote = newVote,
+                    upCount = (post.upCount + upDelta).coerceAtLeast(0),
+                    downCount = (post.downCount + downDelta).coerceAtLeast(0)
+                )
+            } else post
+        }
+
+        uiState = uiState.copy(posts = updatedPosts)
+
         viewModelScope.launch {
             try {
-                container.journalRepository.observeDrafts(targetUserId).collect { drafts ->
-                    val totalObs = maxOf(drafts.size, uiState.posts.size)
-                    uiState = uiState.copy(observations = totalObs)
-                }
+                container.feedRepository.vote(postId, vote)
             } catch (e: Exception) {
-                Log.w("UserProfileViewModel", "Could not observe journal count", e)
+                Log.w("UserProfileViewModel", "Could not vote on post $postId", e)
             }
         }
     }
@@ -104,10 +130,20 @@ class UserProfileViewModel(
         uiState = uiState.copy(isLoadingPosts = true)
         try {
             val userPosts = container.getUserPosts(targetUserId)
-            val totalObs = maxOf(userPosts.size, uiState.observations)
+            val activeUser = EhkoCache.activeUser
+            val votes = if (activeUser.isSignedIn) {
+                container.getUserPostVotes(activeUser.userId, userPosts.map { it.id })
+            } else emptyMap()
+
+            val postsWithVotes = userPosts.map { post ->
+                post.copy(myVote = votes[post.id] ?: Vote.NONE)
+            }.sortedWith(
+                compareByDescending<Post> { it.createdAtMillis }.thenByDescending { it.id }
+            )
+
             uiState = uiState.copy(
-                posts = userPosts,
-                observations = totalObs,
+                posts = postsWithVotes,
+                observations = postsWithVotes.size,
                 isLoadingPosts = false
             )
         } catch (e: CancellationException) {

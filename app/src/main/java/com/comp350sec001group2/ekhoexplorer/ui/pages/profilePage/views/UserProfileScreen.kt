@@ -89,7 +89,11 @@ fun UserProfileScreen(
             modifier = modifier
         )
 
-        selectedPost?.let { post ->
+        selectedPost?.let { selected ->
+            val post = uiState.posts.firstOrNull {
+                it.id == selected.id
+            } ?: selected
+
             Dialog(onDismissRequest = { selectedPost = null }) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -98,7 +102,9 @@ fun UserProfileScreen(
                 ) {
                     PostCard(
                         post = post,
-                        onVote = {},
+                        onVote = { vote ->
+                            viewModel.onPostVote(post.id, vote)
+                        },
                         isOwner = false,
                         onOpenComments = {
                             selectedPost = null
