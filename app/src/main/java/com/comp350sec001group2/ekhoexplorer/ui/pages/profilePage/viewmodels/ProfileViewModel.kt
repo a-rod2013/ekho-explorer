@@ -184,7 +184,9 @@ class ProfileViewModel(
                 post.copy(
                     myVote = existingVotes[post.id] ?: Vote.NONE
                 )
-            }
+            }.sortedWith(
+                compareByDescending<Post> { it.createdAtMillis }.thenByDescending { it.id }
+            )
 
             if (loadedUserId == userId &&
                 EhkoCache.activeUser.isSignedIn &&
