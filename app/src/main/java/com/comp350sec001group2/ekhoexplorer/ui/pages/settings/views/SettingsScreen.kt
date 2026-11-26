@@ -1,10 +1,13 @@
 package com.comp350sec001group2.ekhoexplorer.ui.pages.settings.views
 
+import com.comp350sec001group2.ekhoexplorer.ui.pages.settings.views.components.SettingsItem
+import com.comp350sec001group2.ekhoexplorer.ui.pages.settings.views.components.SettingsSectionTitle
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -45,6 +48,16 @@ fun SettingsScreen(
 ) {
     var showSignOutConfirmation by remember { mutableStateOf(false) }
     var showAboutDialog by remember { mutableStateOf(false) }
+    val contributors = listOf(
+        "Luis Corral",
+        "Ethan Hook",
+        "Connor Green",
+        "Kieron Rank",
+        "Anthony Rodriguez",
+        "Alejandra Salazar",
+        "Alex Walker",
+        "Drew Wishengrad"
+    )
 
     val dimensions = AppStyle.dimens
     val colors = AppStyle.colors
@@ -182,79 +195,83 @@ fun SettingsScreen(
     }
 
     // Displays the app information
+
     if (showAboutDialog) {
         AlertDialog(
-            onDismissRequest = { showAboutDialog = false },
-            title = { Text("About Ekho Explorer") },
+            onDismissRequest = {
+                showAboutDialog = false
+            },
+            title = {
+                Text("About Ekho Explorer")
+            },
             text = {
-                Text(
-                    "Explore the natural world, record observations, " +
-                        "and share discoveries with your community."
-                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(
+                        AppStyle.dimens.md
+                    )
+                ) {
+                    // Application description.
+                    Text(
+                        text = "Explore the natural world, record observations, " +
+                            "and share discoveries with your community.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AppStyle.colors.textPrimary
+                    )
+
+                    HorizontalDivider(
+                        color = AppStyle.colors.divider
+                    )
+
+                    // Contributors section heading.
+                    Text(
+                        text = "Contributors",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = AppStyle.colors.textPrimary
+                    )
+
+                    // Displays contributor names in two columns.
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(
+                            AppStyle.dimens.sm
+                        )
+                    ) {
+                        contributors.chunked(2).forEach { pair ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(
+                                    AppStyle.dimens.md
+                                )
+                            ) {
+                                pair.forEach { contributor ->
+                                    Text(
+                                        text = contributor,
+                                        modifier = Modifier.weight(1f),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = AppStyle.colors.textSecondary
+                                    )
+                                }
+
+                                if (pair.size == 1) {
+                                    Spacer(modifier = Modifier.weight(1f))
+                                }
+                            }
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(
-                    onClick = { showAboutDialog = false }
+                    onClick = {
+                        showAboutDialog = false
+                    }
                 ) {
                     Text("Close")
                 }
             }
         )
     }
-}
 
-@Composable
-private fun SettingsSectionTitle(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleSmall,
-        color = AppStyle.colors.textSecondary,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                top = AppStyle.dimens.lg,
-                bottom = AppStyle.dimens.sm
-            )
-    )
-}
 
-@Composable
-private fun SettingsItem(
-    title: String,
-    icon: ImageVector,
-    onClick: () -> Unit,
-    showChevron: Boolean = true
-) {
-    val dimensions = AppStyle.dimens
-    val colors = AppStyle.colors
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = dimensions.md),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimensions.md)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = colors.textSecondary
-        )
 
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyLarge,
-            color = colors.textPrimary,
-            modifier = Modifier.weight(1f)
-        )
-
-        if (showChevron) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint = colors.textSecondary
-            )
-        }
-    }
 }
