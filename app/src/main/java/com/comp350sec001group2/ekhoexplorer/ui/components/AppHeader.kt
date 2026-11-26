@@ -132,16 +132,6 @@ fun AppHeader(
                 "Profile" -> {
                     accountMenu?.invoke()
                 }
-
-                "Species Search" -> {
-                    IconButton(onClick = onSearchClick) {
-                        Icon(
-                            imageVector = Icons.Filled.Search,
-                            contentDescription = "Search species",
-                            tint = AppStyle.colors.textPrimary
-                        )
-                    }
-                }
             }
         }
     }

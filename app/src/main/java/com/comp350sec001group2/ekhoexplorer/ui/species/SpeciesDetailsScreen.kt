@@ -181,6 +181,17 @@ fun SpeciesDetailsScreen(
                         color = AppStyle.colors.textSecondary
                     )
 
+                    if (details.description?.trim()?.endsWith("...") == true ||
+                        details.description?.trim()?.endsWith("…") == true
+                    ) {
+                        Text(
+                            text = "Note: This description is an abbreviated summary provided by iNaturalist.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppStyle.colors.textSecondary,
+                            fontStyle = FontStyle.Italic
+                        )
+                    }
+
                     Spacer(
                         modifier = Modifier.height(AppStyle.dimens.md)
                     )
