@@ -40,6 +40,11 @@ sealed class Screen(
         title = "Profile"
     )
 
+    data object Settings : Screen(
+        destination = "settings",
+        title = "Settings"
+    )
+
     // Opened when tapping a user's avatar / username in the feed
     data object UserProfile : Screen(
         destination = "userProfile/{userId}",

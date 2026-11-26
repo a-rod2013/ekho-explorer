@@ -53,6 +53,12 @@ import com.comp350sec001group2.ekhoexplorer.ui.pages.notifications.viewmodels.no
 import com.comp350sec001group2.ekhoexplorer.ui.components.AccountMenu
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.ProfileViewModel
 import com.comp350sec001group2.ekhoexplorer.ui.pages.profilePage.viewmodels.profileViewModelFactory
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import com.comp350sec001group2.ekhoexplorer.ui.pages.settings.views.SettingsScreen
+import com.comp350sec001group2.ekhoexplorer.ui.theme.AppStyle
 
 
 @Composable
@@ -142,16 +148,19 @@ private fun AppNavHost(
                     },
                     accountMenu = if (currentDestination == Screen.Profile.destination) {
                         {
-                            AccountMenu(
-                                username = profileUiState.username,
-                                onSignOut = onSignOut,
-                                onChangePassword = {
-                                    navController.navigate(Screen.ChangePassword.destination)
-                                },
-                                onRequestUsernameChange = {
-                                    navController.navigate(Screen.UsernameChange.destination)
+                            IconButton(
+                                onClick = {
+                                    navController.navigate(Screen.Settings.destination) {
+                                        launchSingleTop = true
+                                    }
                                 }
-                            )
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Settings,
+                                    contentDescription = "Open settings",
+                                    tint = AppStyle.colors.textSecondary
+                                )
+                            }
                         }
                     } else {
                         null
@@ -199,9 +208,11 @@ private fun AppNavHost(
                         Screen.AllTrails.destination -> "All Trails"
                         Screen.TrailDetail.destination -> "Trail Details"
                         Screen.Profile.destination -> "Profile"
+                        Screen.Settings.destination -> "Settings"
                         else -> null
                     },
                     onBackClick = if (
+                        currentDestination == Screen.Settings.destination ||
                         currentDestination == Screen.Species.destination ||
                         currentDestination == Screen.ObservationDetails.destination ||
                         currentDestination == Screen.Notifications.destination ||
@@ -473,6 +484,23 @@ private fun AppNavHost(
                     )
                 }
 
+                composable(Screen.Settings.destination) {
+                    SettingsScreen(
+                        username = profileUiState.username,
+                        onChangePassword = {
+                            navController.navigate(Screen.ChangePassword.destination) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onRequestUsernameChange = {
+                            navController.navigate(Screen.UsernameChange.destination) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onSignOut = onSignOut
+                    )
+                }
+
                 composable(Screen.UserProfile.destination) { entry ->
                     val userId = entry.arguments?.getString("userId").orEmpty()
                     UserProfileScreen(
@@ -491,7 +519,7 @@ private fun AppNavHost(
                         viewModel = viewModel(factory = changePasswordViewModelFactory),
                         title = "Change your password",
                         subtitle = "We will email a link to your account address so you can choose a new password.",
-                        backLabel = "Back to profile",
+                        backLabel = "Back to settings",
                     )
                 }
             }
